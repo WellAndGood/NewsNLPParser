@@ -10,6 +10,7 @@ import json
 import spacy
 from spacy import displacy
 from AP_article_builder import AP_article_dict_builder, AP_article_full_txt
+from spacy.matcher import Matcher
 
 nlp = spacy.load("en_core_web_md")
 
@@ -24,7 +25,12 @@ article_txt = AP_article_full_txt(url)
 doc = nlp(article_txt)
 
 # Generate list of sentences from Doc object
-sentences = [sent.text for sent in doc.sents]
+def sentence_generator(txt):
+    doc = nlp(txt)
+    sentences = [sent.text for sent in doc.sents]
+    return list(sentences)
+
+sentences = sentence_generator(doc)
 
 # Retrieve and store entities
 
@@ -100,11 +106,74 @@ def entity_indexer(lst):
     return ent_index_dict
 
 ent_sentence_index = entity_indexer(raw_entity_list)
+
+def verb_matcher(txt):
+    # Verb Finder with Matcher
+    verb_matcher = Matcher(nlp.vocab)
+    verb_pattern = [{"POS": "VERB", "OP": "+"}]
+    verb_matcher.add("VERBS", [verb_pattern])
+    matches = verb_matcher(txt)
+
+    verb_information = []
+
+    for match in matches:
+  
+        word_index = match[1]
+        original_verb = doc[match[1]]
+        lemmatized_verb = doc[match[1]].lemma_
+        verb_information.append([word_index, original_verb, lemmatized_verb])
     
-pp = pprint.PrettyPrinter(indent=4)
-pp.pprint(ent_sentence_index)
+    return verb_information
 
+verbs = verb_matcher(doc)
+# print(verbs)
 
+# List of Verbs
+verbs = verb_matcher(doc)
+
+# List of Article's Sentences
+
+sentences = sentence_generator(doc)
+
+def verb_in_sentence(list_of_verbs, list_of_sentences):
+    # print(list_of_sentences)
+
+    nlp = spacy.load("en_core_web_md")
+    specific_verbs = []
+    sentence_count = -1
+    previous_sentence = None
+
+    word_count = 0
+       
+    for i, sent in enumerate(list_of_sentences):
+        sentence_count += 1
+
+        # Check the sentence's text matches the previous sentence's
+        try:
+            doc = nlp(sent)
+            # print(doc)
+            sentence = doc.text
+            
+            for token in doc:
+                word_count += 1
+                if token.pos_ == 'VERB':
+                    
+                    #verb_index = word_count + token.i
+                    verb_text = token.text
+                    verb_lemma = token.lemma_
+                    sent_word_index = token.i # Start index of the verb relative to the sentence
+                
+                    # Document
+                    specific_verbs.append((verb_text, verb_lemma, word_count, 
+                                                sentence, sentence_count, sent_word_index))    
+        except:
+            continue
+        
+    return specific_verbs
+
+the_verbs = verb_in_sentence(verbs, sentences)
+ppv = pprint.PrettyPrinter(indent=4)
+# ppv.pprint(the_verbs)
 
 
 
