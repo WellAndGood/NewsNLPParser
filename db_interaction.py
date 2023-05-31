@@ -116,7 +116,7 @@ def article_reference_table_insert(sent_list):
 
 
     # SELECTing from the article
-    cursor.execute(f"SELECT * FROM ARTICLES_REFERENCE")
+    # cursor.execute(f"SELECT * FROM ARTICLES_REFERENCE")
     
     # rows = cursor.fetchall()
 
@@ -131,10 +131,8 @@ def article_reference_table_insert(sent_list):
     conn.commit()
     conn.close()
         
-    # print(table)
 
-
-# article_reference_table_insert(sentences)
+article_reference_table_insert(sentences)
 
 
 def verbs_reference_table_insert(verbs_list):
@@ -224,26 +222,11 @@ def verbs_reference_table_insert(verbs_list):
                 else:
                     print(f"{modified_time} does not surpass {latest_modified_db_time}")    
 
-
-    # SELECTing from the article
-    cursor.execute(f"SELECT * FROM VERBS_REFERENCE")
-    rows = cursor.fetchall()
-
-    # Pretty table instance
-    verb_table = PrettyTable()
-    verb_table.field_names = [description[0] for description in cursor.description]
-
-    # Add rows to the table
-    for row in rows:
-        verb_table.add_row(row)
-
-    #print(verb_table)
-
     conn.commit()
     conn.close()
 
 the_verbs = verb_in_sentence(verbs, sentences)
-# verbs_reference_table_insert(the_verbs)
+verbs_reference_table_insert(the_verbs)
 
 
 def entity_reference_table_insert(entity_list):
