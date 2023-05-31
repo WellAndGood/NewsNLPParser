@@ -3,7 +3,15 @@ import pprint
 import datetime
 import spacy
 from AP_article_builder import AP_article_dict_builder, AP_article_full_txt
-from spacy_methods import get_specific_entities, entity_counter, append_to_array, entity_indexer, sentence_generator, verb_matcher, verb_in_sentence
+from spacy_methods import (
+    get_specific_entities,
+    entity_counter,
+    append_to_array,
+    entity_indexer,
+    sentence_generator,
+    verb_matcher,
+    verb_in_sentence,
+)
 import sqlite3
 import re
 from prettytable import PrettyTable
@@ -24,6 +32,7 @@ def hash_string(string):
     hash_object.update(string.encode())
     return hash_object.hexdigest()
 
+
 # Sentence list
 url = "https://apnews.com/article/george-santos-federal-charges-updates-33667a0900271e5002459ab748d8fdc8?utm_source=homepage&utm_medium=TopNews&utm_campaign=position_01"
 article_txt = AP_article_full_txt(url)
@@ -33,14 +42,16 @@ sentences = sentence_generator(doc)
 verbs = verb_matcher(doc)
 
 # Creates a unique hash for the article's headline
-article_dict = AP_article_dict_builder("https://apnews.com/article/george-santos-federal-charges-updates-33667a0900271e5002459ab748d8fdc8?utm_source=homepage&utm_medium=TopNews&utm_campaign=position_01")
+article_dict = AP_article_dict_builder(
+    "https://apnews.com/article/george-santos-federal-charges-updates-33667a0900271e5002459ab748d8fdc8?utm_source=homepage&utm_medium=TopNews&utm_campaign=position_01"
+)
 art_headline = article_dict["headline"]
 hashed_string = hash_string(art_headline)
 
 # Provide unique article name for the table's name
 art_headline = article_dict["headline"]
 unique_article_name = article_dict["headline"].replace(" ", "").lower()
-unique_article_name = re.sub(r'\W+', '', unique_article_name)[:100]
+unique_article_name = re.sub(r"\W+", "", unique_article_name)[:100]
 
 # Create hash for articleID - hash_string is a created function
 # (Would detect change in title wording)
@@ -48,7 +59,7 @@ art_id_hash = hash_string(art_headline)
 
 # Author
 list_author = article_dict["author(s)"]
-art_author = ','.join(list_author)
+art_author = ",".join(list_author)
 
 # Source (URL)
 source_url = article_dict["self_URL"]
@@ -59,19 +70,23 @@ published_time = article_dict["published_time"]
 # Modified time
 modified_time = article_dict["modified_time"]
 
+
 def article_reference_table_insert(sent_list):
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect("database.db")
     cursor = conn.cursor()
 
     # Table creation - Unique article reference table
     # cursor.execute(f"DROP TABLE IF EXISTS ARTICLES_REFERENCE")
-    cursor.execute(f"""CREATE TABLE IF NOT EXISTS ARTICLES_REFERENCE (
+    cursor.execute(
+        f"""CREATE TABLE IF NOT EXISTS ARTICLES_REFERENCE (
                     id INTEGER PRIMARY KEY,     art_id_hash TEXT,      art_headline TEXT,       sentence_id INTEGER, 
                     sentence_contents TEXT,     authors TEXT,       source_url TEXT,        published_time TEXT,
-                    modified_time TEXT)""")
-    
+                    modified_time TEXT)"""
+    )
 
-    cursor.execute("SELECT COUNT(*) FROM ARTICLES_REFERENCE WHERE art_id_hash = ? ", (art_id_hash,))
+    cursor.execute(
+        "SELECT COUNT(*) FROM ARTICLES_REFERENCE WHERE art_id_hash = ? ", (art_id_hash,)
+    )
     result = cursor.fetchone()
     print(result)
     print(result[0])
@@ -81,19 +96,24 @@ def article_reference_table_insert(sent_list):
 
     if result[0] == 0:
         print("There is nothing in the table")
-        # The hash does not exist in our table, meaning that 
-        # a) there is no matching article title, and 
-        # b) we may freely INSERT this information 
+        # The hash does not exist in our table, meaning that
+        # a) there is no matching article title, and
+        # b) we may freely INSERT this information
 
         # INSERTing each sentence into the ref. table
         for i, element in enumerate(sent_list):
-            cursor.execute(f"""INSERT INTO ARTICLES_REFERENCE (
+            cursor.execute(
+                f"""INSERT INTO ARTICLES_REFERENCE (
                             art_headline,       art_id_hash,        sentence_id,        sentence_contents, 
                             authors,        source_url,         published_time,         modified_time) 
                         VALUES ('{art_headline}', '{art_id_hash}', {i}, '{element}', 
-                                '{art_author}', '{source_url}', '{published_time}', '{modified_time}')""")
+                                '{art_author}', '{source_url}', '{published_time}', '{modified_time}')"""
+            )
     else:
-        cursor.execute("SELECT * FROM ARTICLES_REFERENCE WHERE art_id_hash = ? ORDER BY modified_time DESC", (art_id_hash,))
+        cursor.execute(
+            "SELECT * FROM ARTICLES_REFERENCE WHERE art_id_hash = ? ORDER BY modified_time DESC",
+            (art_id_hash,),
+        )
         results = cursor.fetchall()
 
         # If there are results
@@ -104,20 +124,21 @@ def article_reference_table_insert(sent_list):
             # If the article's modified_time (the one being parsed) is more recent than the latest database time
             if modified_time > latest_modified_db_time:
                 for i, element in enumerate(sent_list):
-                    cursor.execute(f"""INSERT INTO ARTICLES_REFERENCE (
+                    cursor.execute(
+                        f"""INSERT INTO ARTICLES_REFERENCE (
                                     art_headline,       art_id_hash,        sentence_id,        sentence_contents, 
                                     authors,        source_url,         published_time,         modified_time) 
                                 VALUES ('{art_headline}', '{art_id_hash}', {i}, '{element}', 
-                                        '{art_author}', '{source_url}', '{published_time}', '{modified_time}')""")
+                                        '{art_author}', '{source_url}', '{published_time}', '{modified_time}')"""
+                    )
 
             # If there is a more recent DB entry, the article does not get submitted (What's the point?)
             else:
-                print(f"{modified_time} does not {latest_modified_db_time}")                            
-
+                print(f"{modified_time} does not {latest_modified_db_time}")
 
     # SELECTing from the article
     # cursor.execute(f"SELECT * FROM ARTICLES_REFERENCE")
-    
+
     # rows = cursor.fetchall()
 
     # Pretty table instance
@@ -130,19 +151,20 @@ def article_reference_table_insert(sent_list):
 
     conn.commit()
     conn.close()
-        
+
 
 article_reference_table_insert(sentences)
 
 
 def verbs_reference_table_insert(verbs_list):
 
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect("database.db")
     cursor = conn.cursor()
 
     # Table creation - Verbs
     # cursor.execute(f"DROP TABLE IF EXISTS VERBS_REFERENCE")
-    cursor.execute(f"""CREATE TABLE IF NOT EXISTS VERBS_REFERENCE (
+    cursor.execute(
+        f"""CREATE TABLE IF NOT EXISTS VERBS_REFERENCE (
                     id INTEGER PRIMARY KEY, 
                     art_id_hash TEXT REFERENCES ARTICLES_REFERENCE (art_id_hash) , 
                     art_headline TEXT,
@@ -153,9 +175,12 @@ def verbs_reference_table_insert(verbs_list):
                     sent_word_index INTEGER,
                     timestamp TEXT,
                     modified_time TEXT
-                    )""")
+                    )"""
+    )
 
-    cursor.execute("SELECT COUNT(*) FROM VERBS_REFERENCE WHERE art_id_hash = ? ", (art_id_hash,))
+    cursor.execute(
+        "SELECT COUNT(*) FROM VERBS_REFERENCE WHERE art_id_hash = ? ", (art_id_hash,)
+    )
     result = cursor.fetchone()
     print(result)
     print(result[0])
@@ -175,8 +200,9 @@ def verbs_reference_table_insert(verbs_list):
             sentence_id = element[4]
             sent_word_index = element[5]
             timestamp = datetime.now()
-        
-            cursor.execute(f"""INSERT INTO VERBS_REFERENCE (
+
+            cursor.execute(
+                f"""INSERT INTO VERBS_REFERENCE (
                             art_id_hash,
                             art_headline,
                             verb_text,
@@ -191,10 +217,14 @@ def verbs_reference_table_insert(verbs_list):
                                 '{article_word_index}', '{sentence_id}', {sent_word_index}, '{timestamp}', 
                                 '{modified_time}'
                                 )
-                        """)    
+                        """
+            )
 
         else:
-            cursor.execute("SELECT * FROM VERBS_REFERENCE WHERE art_id_hash = ? ORDER BY modified_time DESC", (art_id_hash,))
+            cursor.execute(
+                "SELECT * FROM VERBS_REFERENCE WHERE art_id_hash = ? ORDER BY modified_time DESC",
+                (art_id_hash,),
+            )
             results = cursor.fetchall()
 
             if results:
@@ -203,7 +233,8 @@ def verbs_reference_table_insert(verbs_list):
 
                 if modified_time > latest_modified_db_time:
                     for i, element in enumerate(verbs_list):
-                        cursor.execute(f"""INSERT INTO VERBS_REFERENCE (
+                        cursor.execute(
+                            f"""INSERT INTO VERBS_REFERENCE (
                             art_id_hash,
                             art_headline,
                             verb_text,
@@ -218,12 +249,14 @@ def verbs_reference_table_insert(verbs_list):
                                 '{article_word_index}', '{sentence_id}', {sent_word_index}, '{timestamp}', 
                                 '{modified_time}'
                                 )
-                        """)  
+                        """
+                        )
                 else:
-                    print(f"{modified_time} does not surpass {latest_modified_db_time}")    
+                    print(f"{modified_time} does not surpass {latest_modified_db_time}")
 
     conn.commit()
     conn.close()
+
 
 the_verbs = verb_in_sentence(verbs, sentences)
 verbs_reference_table_insert(the_verbs)
@@ -231,11 +264,12 @@ verbs_reference_table_insert(the_verbs)
 
 def entity_reference_table_insert(entity_list):
 
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect("database.db")
     cursor = conn.cursor()
 
     # Table creation - Entities
-    cursor.execute(f"""CREATE TABLE IF NOT EXISTS ENTITIES_REFERENCE (
+    cursor.execute(
+        f"""CREATE TABLE IF NOT EXISTS ENTITIES_REFERENCE (
                 id INTEGER PRIMARY KEY, 
                 art_id_hash TEXT REFERENCES ENTITIES_REFERENCE (art_id_hash), 
                 art_headline TEXT,
@@ -246,9 +280,12 @@ def entity_reference_table_insert(entity_list):
                 sentence_id INTEGER,
                 timestamp TEXT,
                 modified_time TEXT
-                )""")
-    
-    cursor.execute("SELECT COUNT(*) FROM ENTITIES_REFERENCE WHERE art_id_hash = ? ", (art_id_hash,))
+                )"""
+    )
+
+    cursor.execute(
+        "SELECT COUNT(*) FROM ENTITIES_REFERENCE WHERE art_id_hash = ? ", (art_id_hash,)
+    )
     result = cursor.fetchone()
     print(result)
     print(result[0])
@@ -262,15 +299,16 @@ def entity_reference_table_insert(entity_list):
 
         # INSERTing each sentence into the ref. table
         for i, entity in enumerate(entity_list):
-            
+
             entity_text = entity[0]
             entity_type = entity[1]
             word_index_start = entity[2]
             word_index_end = entity[3]
             sentence_id = entity[5]
             timestamp = datetime.now()
-        
-            cursor.execute(f"""INSERT INTO ENTITIES_REFERENCE (
+
+            cursor.execute(
+                f"""INSERT INTO ENTITIES_REFERENCE (
                             art_id_hash,
                             art_headline,
                             entity_text,
@@ -283,9 +321,13 @@ def entity_reference_table_insert(entity_list):
                             ) 
                         VALUES ('{art_id_hash}', '{art_headline}', '{entity_text}', '{entity_type}', 
                         '{word_index_start}', '{word_index_end}', '{sentence_id}', '{timestamp}', '{modified_time}')
-                        """)    
+                        """
+            )
     else:
-        cursor.execute("SELECT * FROM VERBS_REFERENCE WHERE art_id_hash = ? ORDER BY modified_time DESC", (art_id_hash,))
+        cursor.execute(
+            "SELECT * FROM VERBS_REFERENCE WHERE art_id_hash = ? ORDER BY modified_time DESC",
+            (art_id_hash,),
+        )
         results = cursor.fetchall()
 
         if results:
@@ -300,7 +342,8 @@ def entity_reference_table_insert(entity_list):
                     word_index_end = entity[3]
                     sentence_id = entity[5]
                     timestamp = datetime.now()
-                    cursor.execute(f"""INSERT INTO ENTITIES_REFERENCE (
+                    cursor.execute(
+                        f"""INSERT INTO ENTITIES_REFERENCE (
                             art_id_hash,
                             art_headline,
                             entity_text,
@@ -313,12 +356,14 @@ def entity_reference_table_insert(entity_list):
                             ) 
                         VALUES ('{art_id_hash}', '{art_headline}', '{entity_text}', '{entity_type}', 
                         '{word_index_start}', '{word_index_end}', '{sentence_id}', '{timestamp}', '{modified_time}')
-                        """)  
+                        """
+                    )
             else:
                 print(f"{modified_time} does not surpass {latest_modified_db_time}")
 
     conn.commit()
     conn.close()
+
 
 raw_entity_list = get_specific_entities(sentences)
 entity_reference_table_insert(raw_entity_list)

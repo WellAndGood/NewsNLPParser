@@ -1,7 +1,15 @@
 import argparse
 import spacy
 from AP_article_builder import AP_article_dict_builder, AP_article_full_txt
-from spacy_methods import get_specific_entities, entity_counter, append_to_array, entity_indexer, sentence_generator, verb_matcher, verb_in_sentence
+from spacy_methods import (
+    get_specific_entities,
+    entity_counter,
+    append_to_array,
+    entity_indexer,
+    sentence_generator,
+    verb_matcher,
+    verb_in_sentence,
+)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("URL", help="URL to process")
@@ -24,4 +32,3 @@ verbs = verb_matcher(doc)
 
 if __name__ == "__main__":
     print(url)
-    print(typeofv)
