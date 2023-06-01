@@ -1,16 +1,7 @@
-import numpy as np
-import pandas as pd
-from bs4 import BeautifulSoup
-import pprint
-import datetime
-import nltk
-import requests
-import csv
-import json
 import spacy
-from spacy import displacy
-from AP_article_builder import AP_article_dict_builder, AP_article_full_txt
+from AP_article_builder import ap_article_dict_builder, ap_article_full_txt
 from spacy.matcher import Matcher
+from typing import Dict, List, Union
 
 nlp = spacy.load("en_core_web_md")
 
@@ -18,14 +9,14 @@ nlp = spacy.load("en_core_web_md")
 
 # Base URL, and use
 url = "https://apnews.com/article/george-santos-federal-charges-updates-33667a0900271e5002459ab748d8fdc8?utm_source=homepage&utm_medium=TopNews&utm_campaign=position_01"
-article_dict = AP_article_dict_builder(url)
-article_txt = AP_article_full_txt(url)
+article_dict = ap_article_dict_builder(url)
+article_txt = ap_article_full_txt(url)
 
 # Initialize the Doc object
 doc = nlp(article_txt)
 
 # Generate list of sentences from Doc object
-def sentence_generator(txt):
+def sentence_generator(txt: str) -> List[str]:
     doc = nlp(txt)
     sentences = [sent.text for sent in doc.sents]
     return list(sentences)
@@ -36,7 +27,7 @@ sentences = sentence_generator(doc)
 # Retrieve and store entities
 
 
-def get_specific_entities(sentences):
+def get_specific_entities(sentences: list) -> List[Union[str, int]]:
     specific_entities = []
     sentence_count = -1
     previous_sentence = None
@@ -86,7 +77,7 @@ entities = get_specific_entities(sentences)
 # raw_entity_list = list(entities)
 
 # Counts the number of distinct times an entity appears in the article.
-def entity_counter(lst):
+def entity_counter(lst) -> Dict[str, int]:
 
     raw_entity_list = list(entities)
     count_dict = {}
@@ -105,7 +96,7 @@ def entity_counter(lst):
 duplicate_items = entity_counter(entities)
 
 # Algorithm to assign new key values to 1, increment if already existing
-def append_to_array(key, value, dict_to_check):
+def append_to_array(key: str, value: int, dict_to_check: dict) -> None:
     if key in dict_to_check:
         dict_to_check[key].append(value)
     else:
@@ -115,7 +106,7 @@ def append_to_array(key, value, dict_to_check):
 raw_entity_list = list(entities)
 
 
-def entity_indexer(lst):
+def entity_indexer(lst: list) -> Dict[str, List[int]]:
     ent_index_dict = {}
 
     for i, entity_item in enumerate(lst):
@@ -129,9 +120,9 @@ def entity_indexer(lst):
 
 
 ent_sentence_index = entity_indexer(raw_entity_list)
+# print(ent_sentence_index)
 
-
-def verb_matcher(txt):
+def verb_matcher(txt: str) -> List[Union[int, str]]:
     # Verb Finder with Matcher
     verb_matcher = Matcher(nlp.vocab)
     verb_pattern = [{"POS": "VERB", "OP": "+"}]
@@ -161,7 +152,7 @@ verbs = verb_matcher(doc)
 sentences = sentence_generator(doc)
 
 
-def verb_in_sentence(list_of_verbs, list_of_sentences):
+def verb_in_sentence(list_of_verbs: list, list_of_sentences: list) -> List[Union[str, int]]:
     # print(list_of_sentences)
 
     nlp = spacy.load("en_core_web_md")
@@ -209,5 +200,3 @@ def verb_in_sentence(list_of_verbs, list_of_sentences):
 
 
 the_verbs = verb_in_sentence(verbs, sentences)
-ppv = pprint.PrettyPrinter(indent=4)
-# ppv.pprint(the_verbs)

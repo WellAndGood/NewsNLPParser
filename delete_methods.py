@@ -1,25 +1,7 @@
-import numpy as np
-import pprint
-import datetime
-import spacy
-from AP_article_builder import AP_article_dict_builder, AP_article_full_txt
-from spacy_methods import (
-    get_specific_entities,
-    entity_counter,
-    append_to_array,
-    entity_indexer,
-    sentence_generator,
-    verb_matcher,
-    verb_in_sentence,
-)
 import sqlite3
-import re
-from prettytable import PrettyTable
-from datetime import datetime
-import hashlib
+from typing import Dict, List, Union, AnyStr
 
-
-def table_delete(table_name):
+def table_delete(table_name: str) -> AnyStr:
     conn = sqlite3.connect("database.db")
     cursor = conn.cursor()
 

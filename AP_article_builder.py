@@ -1,27 +1,19 @@
-import numpy as np
 from bs4 import BeautifulSoup
-import pprint
-import csv
-import datetime
-import nltk
 import requests
-import csv
 import json
-import spacy
-from spacy import displacy
-import pprint
+from typing import Dict, Optional
 
 # Works for Associated Press Articles
-def AP_article_dict_builder(url):
+def ap_article_dict_builder(url: str) -> Dict:
 
     # Takes URL, outputs Beautiful Soup html
     response = requests.get(url)
-    APArticle = BeautifulSoup(response.content, "html.parser")
+    ap_article = BeautifulSoup(response.content, "html.parser")
 
     article_information = {}
 
     # Retrieves canonical link
-    canonical_links = APArticle.find_all("link", rel="canonical")
+    canonical_links = ap_article.find_all("link", rel="canonical")
 
     # Print the href attribute of each matching link
     for link in canonical_links:
@@ -30,15 +22,15 @@ def AP_article_dict_builder(url):
     article_information["self_URL"] = self_URL
 
     # Retrieves article headline
-    main_Headline = APArticle.find_all("h1")
+    main_Headline = ap_article.find_all("h1")
     main_Headline = main_Headline[0].text
     article_information["headline"] = main_Headline
 
     # Retrieves article datetime metadata
-    published_time = APArticle.find("meta", {"property": "article:published_time"}).get(
+    published_time = ap_article.find("meta", {"property": "article:published_time"}).get(
         "content"
     )
-    modified_time = APArticle.find("meta", {"property": "article:modified_time"}).get(
+    modified_time = ap_article.find("meta", {"property": "article:modified_time"}).get(
         "content"
     )
     article_information["published_time"] = published_time
@@ -46,17 +38,17 @@ def AP_article_dict_builder(url):
 
     # Retrieves authors
     author_list = []
-    scripts = APArticle.find(
+    scripts = ap_article.find(
         "script", attrs={"data-rh": "true", "type": "application/ld+json"}
     )
-    JSONscript = json.loads(scripts.text)
-    author_list = JSONscript["author"]
+    json_script = json.loads(scripts.text)
+    author_list = json_script["author"]
     article_information["author(s)"] = author_list
 
     # Retrieves image data
     image_data = []
-    image_url = JSONscript["image"]
-    image_caption_div = APArticle.find_all("div", attrs={"data-key": "embed-caption"})
+    image_url = json_script["image"]
+    image_caption_div = ap_article.find_all("div", attrs={"data-key": "embed-caption"})
     image_caption = image_caption_div[0].text
     try:
         image_attribution = image_caption[-50:].replace(")", "").split("(")[1]
@@ -69,7 +61,7 @@ def AP_article_dict_builder(url):
     paragraphCount = 0
     article_paragraphs = []
 
-    article_content = APArticle.find_all(
+    article_content = ap_article.find_all(
         "div", {"class": "Article", "data-key": "article"}
     )
     inner_para = article_content[0].find_all("p")
@@ -103,8 +95,8 @@ def AP_article_dict_builder(url):
 # https://apnews.com/article/george-santos-federal-charges-updates-33667a0900271e5002459ab748d8fdc8?utm_source=homepage&utm_medium=TopNews&utm_campaign=position_01
 
 
-def AP_article_full_txt(url):
-    article_dict = AP_article_dict_builder(url)
+def ap_article_full_txt(url: str) -> Optional[str]:
+    article_dict = ap_article_dict_builder(url)
     paragraph_contents = article_dict["mainContents"]
 
     entire_article = ""
@@ -115,4 +107,4 @@ def AP_article_full_txt(url):
     return entire_article
 
 
-# AP_article_full_txt("https://apnews.com/article/george-santos-federal-charges-updates-33667a0900271e5002459ab748d8fdc8?utm_source=homepage&utm_medium=TopNews&utm_campaign=position_01")
+# ap_article_full_txt("https://apnews.com/article/george-santos-federal-charges-updates-33667a0900271e5002459ab748d8fdc8?utm_source=homepage&utm_medium=TopNews&utm_campaign=position_01")

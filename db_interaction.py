@@ -1,22 +1,17 @@
-import numpy as np
-import pprint
 import datetime
 import spacy
-from AP_article_builder import AP_article_dict_builder, AP_article_full_txt
+from AP_article_builder import ap_article_dict_builder, ap_article_full_txt
 from spacy_methods import (
     get_specific_entities,
-    entity_counter,
-    append_to_array,
-    entity_indexer,
     sentence_generator,
     verb_matcher,
     verb_in_sentence,
 )
 import sqlite3
 import re
-from prettytable import PrettyTable
 from datetime import datetime
 import hashlib
+from typing import Optional
 
 """
 DATA ACCESS LAYER
@@ -27,7 +22,7 @@ May 29, 2023 - Daniel Pisani - Initial creation of this file
 """
 
 # Creates a unique hash of a string
-def hash_string(string):
+def hash_string(string: str) -> Optional[str]:
     hash_object = hashlib.md5()
     hash_object.update(string.encode())
     return hash_object.hexdigest()
@@ -35,14 +30,14 @@ def hash_string(string):
 
 # Sentence list
 url = "https://apnews.com/article/george-santos-federal-charges-updates-33667a0900271e5002459ab748d8fdc8?utm_source=homepage&utm_medium=TopNews&utm_campaign=position_01"
-article_txt = AP_article_full_txt(url)
+article_txt = ap_article_full_txt(url)
 nlp = spacy.load("en_core_web_md")
 doc = nlp(article_txt)
 sentences = sentence_generator(doc)
 verbs = verb_matcher(doc)
 
 # Creates a unique hash for the article's headline
-article_dict = AP_article_dict_builder(
+article_dict = ap_article_dict_builder(
     "https://apnews.com/article/george-santos-federal-charges-updates-33667a0900271e5002459ab748d8fdc8?utm_source=homepage&utm_medium=TopNews&utm_campaign=position_01"
 )
 art_headline = article_dict["headline"]
@@ -71,7 +66,7 @@ published_time = article_dict["published_time"]
 modified_time = article_dict["modified_time"]
 
 
-def article_reference_table_insert(sent_list):
+def article_reference_table_insert(sent_list: list) -> None:
     conn = sqlite3.connect("database.db")
     cursor = conn.cursor()
 
@@ -136,19 +131,6 @@ def article_reference_table_insert(sent_list):
             else:
                 print(f"{modified_time} does not {latest_modified_db_time}")
 
-    # SELECTing from the article
-    # cursor.execute(f"SELECT * FROM ARTICLES_REFERENCE")
-
-    # rows = cursor.fetchall()
-
-    # Pretty table instance
-    # table = PrettyTable()
-    # table.field_names = [description[0] for description in cursor.description]
-
-    # Add rows to the Pretty Table
-    # for row in rows:
-    #     table.add_row(row)
-
     conn.commit()
     conn.close()
 
@@ -156,7 +138,7 @@ def article_reference_table_insert(sent_list):
 article_reference_table_insert(sentences)
 
 
-def verbs_reference_table_insert(verbs_list):
+def verbs_reference_table_insert(verbs_list: list) -> None:
 
     conn = sqlite3.connect("database.db")
     cursor = conn.cursor()
@@ -262,7 +244,7 @@ the_verbs = verb_in_sentence(verbs, sentences)
 verbs_reference_table_insert(the_verbs)
 
 
-def entity_reference_table_insert(entity_list):
+def entity_reference_table_insert(entity_list: list) -> None:
 
     conn = sqlite3.connect("database.db")
     cursor = conn.cursor()
@@ -363,7 +345,6 @@ def entity_reference_table_insert(entity_list):
 
     conn.commit()
     conn.close()
-
 
 raw_entity_list = get_specific_entities(sentences)
 entity_reference_table_insert(raw_entity_list)
