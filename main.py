@@ -1,24 +1,42 @@
 import argparse
-import re
+import spacy
+from AP_article_builder import ap_article_dict_builder, ap_article_full_txt
+from spacy_methods import (
+    sentence_generator,
+    get_specific_entities,
+    entity_counter,
+    verb_in_sentence,
+    verb_matcher,
+)
+from db_interaction import (article_reference_table_insert, 
+    verbs_reference_table_insert, 
+    entity_reference_table_insert
+)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("URL", help="URL to process")
 args = parser.parse_args()
 
-url = args.URL
-print(url)
-
-# Revisit this
-url_pattern = re.compile(
-    r'^(https?|ftp)://'  # Protocol (http, https, ftp)
-    r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # Domain
-    r'(?:/?|[/?]\S+)$', re.IGNORECASE  # Ignore case
-)
-
-if url_pattern.match(url):
-    print("Valid URL")
-else:
-    print("Invalid URL")
 
 if __name__ == "__main__":
-    print("hello")
+
+    nlp = spacy.load("en_core_web_md")
+
+    # Base URL. Use to obtain article information
+    url = args.URL
+    article_dict = ap_article_dict_builder(url)
+    article_txt = ap_article_full_txt(url)
+
+    # Initialize the Doc object, generate sentences, verbs, entities, from the article
+    doc = nlp(article_txt)
+    sentences = sentence_generator(doc)
+    verbs = verb_matcher(doc)
+    entities = get_specific_entities(sentences)
+    raw_entity_list = list(entities)
+    duplicate_items = entity_counter(entities)
+    the_verbs = verb_in_sentence(verbs, sentences)
+
+    # Insert article information into their distinct tables
+    article_reference_table_insert(sentences)
+    verbs_reference_table_insert(the_verbs)
+    entity_reference_table_insert(raw_entity_list)
