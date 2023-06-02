@@ -2,10 +2,8 @@ import datetime
 import spacy
 from AP_article_builder import ap_article_dict_builder, ap_article_full_txt
 from spacy_methods import (
-    get_specific_entities,
     sentence_generator,
-    verb_matcher,
-    verb_in_sentence,
+    verb_matcher
 )
 import sqlite3
 import re
@@ -83,11 +81,8 @@ def article_reference_table_insert(sent_list: list) -> None:
         "SELECT COUNT(*) FROM ARTICLES_REFERENCE WHERE art_id_hash = ? ", (art_id_hash,)
     )
     result = cursor.fetchone()
-    print(result)
-    print(result[0])
 
     modified_time = article_dict["modified_time"]
-    # modified_time = "2023-05-12T02:56:06Z"
 
     if result[0] == 0:
         print("There is nothing in the table")
@@ -114,7 +109,6 @@ def article_reference_table_insert(sent_list: list) -> None:
         # If there are results
         if results:
             latest_modified_db_time = results[0][8]
-            print(latest_modified_db_time)
 
             # If the article's modified_time (the one being parsed) is more recent than the latest database time
             if modified_time > latest_modified_db_time:
@@ -133,9 +127,6 @@ def article_reference_table_insert(sent_list: list) -> None:
 
     conn.commit()
     conn.close()
-
-
-article_reference_table_insert(sentences)
 
 
 def verbs_reference_table_insert(verbs_list: list) -> None:
@@ -164,8 +155,6 @@ def verbs_reference_table_insert(verbs_list: list) -> None:
         "SELECT COUNT(*) FROM VERBS_REFERENCE WHERE art_id_hash = ? ", (art_id_hash,)
     )
     result = cursor.fetchone()
-    print(result)
-    print(result[0])
 
     # modified_time = article_dict["modified_time"]
     modified_time = "2023-05-13T02:56:06Z"
@@ -211,8 +200,6 @@ def verbs_reference_table_insert(verbs_list: list) -> None:
 
             if results:
                 latest_modified_db_time = results[0][9]
-                print(latest_modified_db_time)
-
                 if modified_time > latest_modified_db_time:
                     for i, element in enumerate(verbs_list):
                         cursor.execute(
@@ -240,10 +227,6 @@ def verbs_reference_table_insert(verbs_list: list) -> None:
     conn.close()
 
 
-the_verbs = verb_in_sentence(verbs, sentences)
-verbs_reference_table_insert(the_verbs)
-
-
 def entity_reference_table_insert(entity_list: list) -> None:
 
     conn = sqlite3.connect("database.db")
@@ -269,8 +252,6 @@ def entity_reference_table_insert(entity_list: list) -> None:
         "SELECT COUNT(*) FROM ENTITIES_REFERENCE WHERE art_id_hash = ? ", (art_id_hash,)
     )
     result = cursor.fetchone()
-    print(result)
-    print(result[0])
 
     modified_time = article_dict["modified_time"]
     # modified_time = "2023-05-14T02:56:06Z"
@@ -314,7 +295,6 @@ def entity_reference_table_insert(entity_list: list) -> None:
 
         if results:
             latest_modified_db_time = results[0][9]
-            print(latest_modified_db_time)
 
             if modified_time > latest_modified_db_time:
                 for i, entity in enumerate(entity_list):
@@ -345,6 +325,3 @@ def entity_reference_table_insert(entity_list: list) -> None:
 
     conn.commit()
     conn.close()
-
-raw_entity_list = get_specific_entities(sentences)
-entity_reference_table_insert(raw_entity_list)

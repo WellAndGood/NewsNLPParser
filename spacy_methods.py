@@ -25,8 +25,6 @@ def sentence_generator(txt: str) -> List[str]:
 sentences = sentence_generator(doc)
 
 # Retrieve and store entities
-
-
 def get_specific_entities(sentences: list) -> List[Union[str, int]]:
     specific_entities = []
     sentence_count = -1
@@ -74,8 +72,6 @@ def get_specific_entities(sentences: list) -> List[Union[str, int]]:
 
 entities = get_specific_entities(sentences)
 
-# raw_entity_list = list(entities)
-
 # Counts the number of distinct times an entity appears in the article.
 def entity_counter(lst) -> Dict[str, int]:
 
@@ -105,7 +101,6 @@ def append_to_array(key: str, value: int, dict_to_check: dict) -> None:
 
 raw_entity_list = list(entities)
 
-
 def entity_indexer(lst: list) -> Dict[str, List[int]]:
     ent_index_dict = {}
 
@@ -118,9 +113,6 @@ def entity_indexer(lst: list) -> Dict[str, List[int]]:
         append_to_array(entity_item[0], entity_item[5], ent_index_dict)
     return ent_index_dict
 
-
-ent_sentence_index = entity_indexer(raw_entity_list)
-# print(ent_sentence_index)
 
 def verb_matcher(txt: str) -> List[Union[int, str]]:
     # Verb Finder with Matcher
@@ -141,19 +133,14 @@ def verb_matcher(txt: str) -> List[Union[int, str]]:
     return verb_information
 
 
-verbs = verb_matcher(doc)
-# print(verbs)
-
 # List of Verbs
 verbs = verb_matcher(doc)
 
 # List of Article's Sentences
-
 sentences = sentence_generator(doc)
 
 
 def verb_in_sentence(list_of_verbs: list, list_of_sentences: list) -> List[Union[str, int]]:
-    # print(list_of_sentences)
 
     nlp = spacy.load("en_core_web_md")
     specific_verbs = []
@@ -198,5 +185,3 @@ def verb_in_sentence(list_of_verbs: list, list_of_sentences: list) -> List[Union
 
     return specific_verbs
 
-
-the_verbs = verb_in_sentence(verbs, sentences)

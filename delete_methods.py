@@ -16,4 +16,4 @@ def table_delete(table_name: str) -> AnyStr:
 
 # table_delete("ARTICLES_REFERENCE")
 # table_delete("VERBS_REFERENCE")
-table_delete("ENTITIES_REFERENCE")
+# table_delete("ENTITIES_REFERENCE")

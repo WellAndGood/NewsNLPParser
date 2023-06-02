@@ -14,17 +14,14 @@ def ap_article_dict_builder(url: str) -> Dict:
 
     # Retrieves canonical link
     canonical_links = ap_article.find_all("link", rel="canonical")
-
-    # Print the href attribute of each matching link
-    for link in canonical_links:
-        self_URL = link.get("href")
+    self_URL = canonical_links[-1].get("href")
 
     article_information["self_URL"] = self_URL
 
     # Retrieves article headline
-    main_Headline = ap_article.find_all("h1")
-    main_Headline = main_Headline[0].text
-    article_information["headline"] = main_Headline
+    main_headline = ap_article.find_all("h1")
+    main_headline = main_headline[0].text
+    article_information["headline"] = main_headline
 
     # Retrieves article datetime metadata
     published_time = ap_article.find("meta", {"property": "article:published_time"}).get(
@@ -52,7 +49,7 @@ def ap_article_dict_builder(url: str) -> Dict:
     image_caption = image_caption_div[0].text
     try:
         image_attribution = image_caption[-50:].replace(")", "").split("(")[1]
-    except:
+    except IndexError:
         image_attribution = ""
 
     image_data.append([image_url, image_caption, image_attribution])
@@ -92,9 +89,6 @@ def ap_article_dict_builder(url: str) -> Dict:
     return article_information
 
 
-# https://apnews.com/article/george-santos-federal-charges-updates-33667a0900271e5002459ab748d8fdc8?utm_source=homepage&utm_medium=TopNews&utm_campaign=position_01
-
-
 def ap_article_full_txt(url: str) -> Optional[str]:
     article_dict = ap_article_dict_builder(url)
     paragraph_contents = article_dict["mainContents"]
@@ -105,6 +99,3 @@ def ap_article_full_txt(url: str) -> Optional[str]:
         entire_article += f" {content[1]}"
 
     return entire_article
-
-
-# ap_article_full_txt("https://apnews.com/article/george-santos-federal-charges-updates-33667a0900271e5002459ab748d8fdc8?utm_source=homepage&utm_medium=TopNews&utm_campaign=position_01")
