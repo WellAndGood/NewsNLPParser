@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block head %}
+{{ super() }}
+<title>AP News - Natural Language Parser</title>
+{% endblock %}
+
+{% block body %}
+<div class="content">
+    <h1 style="text-align: center">AP News - Natural Language Parser</h1>
+    {% if searches|length < 1 %}
+    <h4 style="text-align: center">There are no saved searches. Create one by searching</h4>
+    {% else %}
+    <table>
+        <tr>
+            <th>URL</th>
+            <th>Date</th>
+            <th>Actions</th>
+        </tr>
+        {% for search in searches %}
+        <tr>
+            <td>{{ search.url }}</td>
+            <td>{{ search.search_datetime.date() }}</td>
+            <td>
+                <a href="/delete/{{search.id}}">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    {% endif %}
+
+    <form style="text-align: center" action="/" method="POST">
+        <!-- name and id were previously named 'content'  -->
+        <input type="text" name="NewsURL" id="NewsURL" placeholder="Enter AP News URL Here">
+        <input type="submit" value="Search News">
+    </form>
+</div>
+{% endblock %}

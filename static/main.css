@@ -1,0 +1,13 @@
+body {
+    margin: 0;
+    font-family: sans-serif;
+}
+
+table {
+    border-collapse: collapse;
+    margin: 10px auto
+}
+
+table, th, td {
+    border: 1px solid black; /* Add a 1px black solid border */
+  }
