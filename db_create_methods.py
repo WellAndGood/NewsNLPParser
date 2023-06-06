@@ -1,7 +1,7 @@
 import sqlite3
 
 
-def article_reference_table_delete():
+def article_reference_table_create():
     conn = sqlite3.connect("NLPdatabase.db")
     cursor = conn.cursor()
 
@@ -17,7 +17,8 @@ def article_reference_table_delete():
                     authors TEXT,       
                     source_url TEXT,        
                     published_time TEXT,
-                    modified_time TEXT)
+                    modified_time TEXT
+                );
         """
     )
 
@@ -43,12 +44,12 @@ def verbs_reference_table_create():
                     sent_word_index INTEGER,
                     timestamp TEXT,
                     modified_time TEXT
-                    )"""
+                );"""
     )
     conn.commit()
     conn.close()
 
-def entity_reference_table_insert():
+def entity_reference_table_create():
 
     conn = sqlite3.connect("NLPdatabase.db")
     cursor = conn.cursor()
@@ -66,12 +67,58 @@ def entity_reference_table_insert():
                 sentence_id INTEGER,
                 timestamp TEXT,
                 modified_time TEXT
-                )"""
+            );"""
+    )
+    conn.commit()
+    conn.close()
+
+def search_reference_table_create():
+
+    conn = sqlite3.connect("NLPdatabase.db")
+    cursor = conn.cursor()
+
+    # Table creation - Entities
+    cursor.execute(
+        f"""CREATE TABLE IF NOT EXISTS SEARCHES_REFERENCE (
+                id INTEGER PRIMARY KEY,
+                url TEXT,
+                title TEXT DEFAULT 'Untitled',
+                search_datetime DATETIME DEFAULT CURRENT_TIMESTAMP
+        );"""
     )
     conn.commit()
     conn.close()
 
 
-article_reference_table_delete()
+def alter_table():
+    conn = sqlite3.connect("NLPdatabase.db")
+    cursor = conn.cursor()
+
+    # Table creation - Entities
+    cursor.execute("""
+        CREATE TABLE temp_SEARCHES_REFERENCE (
+            id INTEGER PRIMARY KEY,
+            url TEXT,
+            title TEXT DEFAULT 'None - Analyze',
+            search_datetime DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) 
+    """)
+
+    cursor.execute(""" INSERT INTO temp_SEARCHES_REFERENCE (id, url, title, search_datetime)
+            SELECT id, url, title, search_datetime
+            FROM SEARCHES_REFERENCE """)
+    
+    cursor.execute(""" DROP TABLE SEARCHES_REFERENCE """ )
+
+    cursor.execute(""" ALTER TABLE temp_SEARCHES_REFERENCE RENAME TO SEARCHES_REFERENCE """ )
+
+    conn.commit()
+    conn.close()
+
+# alter_table()
+
+
+article_reference_table_create()
 verbs_reference_table_create()
-entity_reference_table_insert()
+entity_reference_table_create()
+search_reference_table_create()

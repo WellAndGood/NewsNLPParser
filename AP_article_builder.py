@@ -88,7 +88,6 @@ def ap_article_dict_builder(url: str) -> Dict:
 
     return article_information
 
-
 def ap_article_full_txt(url: str) -> Optional[str]:
     article_dict = ap_article_dict_builder(url)
     paragraph_contents = article_dict["mainContents"]

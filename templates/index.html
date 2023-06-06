@@ -8,6 +8,20 @@
 {% block body %}
 <div class="content">
     <h1 style="text-align: center">AP News - Natural Language Parser</h1>
+    <form style="text-align: center" action="/" method="POST">
+        <!-- name and id were previously named 'content'  -->
+        <input type="text" name="NewsURL" id="NewsURL" placeholder="Enter AP News URL Here">
+        <input type="submit" value="Search News">
+    </form>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <ul class="errMessages">
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
     {% if searches|length < 1 %}
     <h4 style="text-align: center">There are no saved searches. Create one by searching</h4>
     {% else %}
@@ -15,25 +29,21 @@
         <tr>
             <th>URL</th>
             <th>Date</th>
+            <th>Title</th>
             <th>Actions</th>
         </tr>
         {% for search in searches %}
         <tr>
-            <td>{{ search.url }}</td>
+            <td class="url-column">{{ search.url }}</td>
             <td>{{ search.search_datetime.date() }}</td>
+            <td><a href="/article/{{search.id}}">{{ search.title }}</a></td>
             <td>
-                <a href="/delete/{{search.id}}">Delete</a>
+                <a href="/delete/{{search.id}}" onclick="confirmDeletion()">Delete</a>
             </td>
         </tr>
         {% endfor %}
     </table>
 
     {% endif %}
-
-    <form style="text-align: center" action="/" method="POST">
-        <!-- name and id were previously named 'content'  -->
-        <input type="text" name="NewsURL" id="NewsURL" placeholder="Enter AP News URL Here">
-        <input type="submit" value="Search News">
-    </form>
 </div>
 {% endblock %}

@@ -1,10 +1,18 @@
-from flask import Flask, render_template, url_for, request, redirect
+from flask import Flask, render_template, url_for, request, redirect, flash
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from datetime import datetime
+from spacy.tokens import Doc
+import spacy
+import re
+from AP_article_builder import ap_article_dict_builder, ap_article_full_txt
+from spacy_methods import sentence_generator, verb_matcher, get_specific_entities, entity_counter, verb_in_sentence
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///NLPdatabase.db'
+app.secret_key = 'your_secret_key'
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 class Article(db.Model):
     # Define Article_Reference's columns and properties here
@@ -103,7 +111,8 @@ class Entity(db.Model):
 class Search(db.Model):
     __tablename__ = 'SEARCHES_REFERENCE'
     id = db.Column(db.Integer, primary_key=True)
-    url = db.Column(db.String(200))
+    url = db.Column(db.String(300))
+    title = db.Column(db.String(250), default="Untitled")
     search_datetime = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
@@ -113,13 +122,15 @@ class Search(db.Model):
 def index():
     if request.method == "POST":
         search_content = request.form['NewsURL']
-        new_task = Search(url=search_content, search_datetime=datetime.now())
-        #try:
-        db.session.add(new_task)
-        db.session.commit()
-        return redirect('/')
-        #except:
-        #    return 'There was an issue adding your search to our records.'
+        pattern = r'.*APNews.*'
+        if re.match(pattern, search_content, re.IGNORECASE):
+            new_task = Search(url=search_content, search_datetime=datetime.now())
+            db.session.add(new_task)
+            db.session.commit()
+            return redirect('/')
+        else:
+            flash("Invalid string. Only URLs with 'APNews' will be analyzed.")
+            return redirect('/')
     else:
         searches = Search.query.all()
         return render_template('index.html', searches=searches)
@@ -134,8 +145,47 @@ def search_delete(id):
     except:
         return 'There was an issue deleting this search.'
 
+@app.route('/article/<int:id>')
+def article_search(id):
+    article_to_search = Search.query.get_or_404(id)
+    print(article_to_search.url)
+    try:
+        url = article_to_search.url
+        if url is not None:
+            article_dict = ap_article_dict_builder(url)
+            article_txt = ap_article_full_txt(url)
+
+            print(article_dict)
+            print(article_txt)
+
+            nlp = spacy.load("en_core_web_md")
+
+            # Initialize the Doc object, generate sentences, verbs, entities, from the article
+            doc = nlp(article_txt)
+            sentences = sentence_generator(doc)
+            verbs = verb_matcher(doc)
+            entities = get_specific_entities(sentences)
+            raw_entity_list = list(entities)
+            duplicate_items = entity_counter(entities)
+            the_verbs = verb_in_sentence(verbs, sentences)
+
+            article = Article.query.filter_by(source_url=url).first()
+            print(article)
+
+            if article is not None:
+                print("you have something")
+            else:
+                print("you have nothing")
+    except:
+        pass
+
+    
+
+    return redirect('/')
+
+
 with app.app_context():
-    db.metadata.create_all(bind=db.engine, tables=[Article.__table__, Entity.__table__, Verb.__table__])
+    db.metadata.create_all(bind=db.engine, tables=[Article.__table__, Entity.__table__, Verb.__table__, Search.__table__])
     db.create_all()
 
 if __name__ == "__main__":

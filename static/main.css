@@ -10,4 +10,20 @@ table {
 
 table, th, td {
     border: 1px solid black; /* Add a 1px black solid border */
+    padding: 4px;
   }
+
+.url-column {
+    word-wrap: break-word;
+    max-width: 300px;
+}
+
+.errMessages {
+    text-align: center
+}
+
+.errMessages li {
+    color: red;
+    text-align: left;
+    display: inline-block;
+}

@@ -6,6 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
     {% block head %}{% endblock %}
+    <script>
+        function confirmDeletion() {
+            var result = confirm("Are you sure you want to delete?");
+                if (result) {
+                    // User clicked "OK"
+                    // Perform the deletion logic here
+                    alert("Deletion successful!");
+                } else {
+                    // User clicked "Cancel" or closed the dialog
+                    console.log("Deletion canceled.");
+                }
+        }
+    </script>
 </head>
 <body>
     {% block body %}{% endblock %}

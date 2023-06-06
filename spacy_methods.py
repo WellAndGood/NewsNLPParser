@@ -1,4 +1,5 @@
 import spacy
+from spacy.tokens import Doc
 from AP_article_builder import ap_article_dict_builder, ap_article_full_txt
 from spacy.matcher import Matcher
 from typing import Dict, List, Union
@@ -114,12 +115,12 @@ def entity_indexer(lst: list) -> Dict[str, List[int]]:
     return ent_index_dict
 
 
-def verb_matcher(txt: str) -> List[Union[int, str]]:
+def verb_matcher(doc: Doc) -> List[Union[int, str]]:
     # Verb Finder with Matcher
     verb_matcher = Matcher(nlp.vocab)
     verb_pattern = [{"POS": "VERB", "OP": "+"}]
     verb_matcher.add("VERBS", [verb_pattern])
-    matches = verb_matcher(txt)
+    matches = verb_matcher(doc)
 
     verb_information = []
 
@@ -140,7 +141,7 @@ verbs = verb_matcher(doc)
 sentences = sentence_generator(doc)
 
 
-def verb_in_sentence(list_of_verbs: list, list_of_sentences: list) -> List[Union[str, int]]:
+def verb_in_sentence(list_of_verbs: list, list_of_sentences: list, doc: Doc) -> List[Union[str, int]]:
 
     nlp = spacy.load("en_core_web_md")
     specific_verbs = []
