@@ -18,6 +18,11 @@ table, th, td {
     max-width: 300px;
 }
 
+.title-column {
+    word-wrap: break-word;
+    max-width: 300px;
+}
+
 .errMessages {
     text-align: center
 }

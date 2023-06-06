@@ -114,6 +114,7 @@ class Search(db.Model):
     url = db.Column(db.String(300))
     title = db.Column(db.String(250), default="Untitled")
     search_datetime = db.Column(db.DateTime, default=datetime.utcnow)
+    searched = db.Column(db.Boolean, default=False)
 
     def __repr__(self):
         return('<Search %r>' % self.id)
@@ -125,6 +126,11 @@ def index():
         pattern = r'.*APNews.*'
         if re.match(pattern, search_content, re.IGNORECASE):
             new_task = Search(url=search_content, search_datetime=datetime.now())
+            article_dict = ap_article_dict_builder(search_content)
+            new_title = article_dict["headline"]
+            is_searched = True
+            new_task.title = new_title
+            new_task.searched = is_searched
             db.session.add(new_task)
             db.session.commit()
             return redirect('/')
@@ -145,19 +151,14 @@ def search_delete(id):
     except:
         return 'There was an issue deleting this search.'
 
-@app.route('/article/<int:id>')
+@app.route('/article/analysis/<int:id>', methods=["GET", "POST"])
 def article_search(id):
     article_to_search = Search.query.get_or_404(id)
-    print(article_to_search.url)
     try:
         url = article_to_search.url
         if url is not None:
             article_dict = ap_article_dict_builder(url)
             article_txt = ap_article_full_txt(url)
-
-            print(article_dict)
-            print(article_txt)
-
             nlp = spacy.load("en_core_web_md")
 
             # Initialize the Doc object, generate sentences, verbs, entities, from the article
@@ -167,21 +168,21 @@ def article_search(id):
             entities = get_specific_entities(sentences)
             raw_entity_list = list(entities)
             duplicate_items = entity_counter(entities)
-            the_verbs = verb_in_sentence(verbs, sentences)
+            the_verbs = verb_in_sentence(verbs, sentences, doc)
 
-            article = Article.query.filter_by(source_url=url).first()
-            print(article)
+            new_title = article_dict["headline"]
+            is_searched = True 
 
-            if article is not None:
-                print("you have something")
-            else:
-                print("you have nothing")
+            
+            article_to_search.title = new_title
+            article_to_search.searched = is_searched
+            db.session.add(article_to_search)
+            db.session.commit()
+            
     except:
         pass
 
-    
-
-    return redirect('/')
+    return render_template('analysis.html')
 
 
 with app.app_context():

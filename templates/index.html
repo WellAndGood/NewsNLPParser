@@ -8,6 +8,8 @@
 {% block body %}
 <div class="content">
     <h1 style="text-align: center">AP News - Natural Language Parser</h1>
+    <p>This application serves to demonstrate the practical use of natural language processing and machine learning libraries to analyze the news.</p>
+    <p>It is limited to the Associated Press as a source because each website requires its own web scraping method. </p>
     <form style="text-align: center" action="/" method="POST">
         <!-- name and id were previously named 'content'  -->
         <input type="text" name="NewsURL" id="NewsURL" placeholder="Enter AP News URL Here">
@@ -27,16 +29,18 @@
     {% else %}
     <table>
         <tr>
+            <th>Title</th>
             <th>URL</th>
             <th>Date</th>
-            <th>Title</th>
+            <th>Analysis</th>
             <th>Actions</th>
         </tr>
         {% for search in searches %}
         <tr>
-            <td class="url-column">{{ search.url }}</td>
+            <td class="title-column">{{ search.title }}</td>
+            <td class="url-column"><a href="{{search.url}}" target="_blank">{{ search.url }}</a></td>
             <td>{{ search.search_datetime.date() }}</td>
-            <td><a href="/article/{{search.id}}">{{ search.title }}</a></td>
+            <td><a href="/article/analysis/{{search.id}}">Analyse</td>
             <td>
                 <a href="/delete/{{search.id}}" onclick="confirmDeletion()">Delete</a>
             </td>
