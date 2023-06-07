@@ -7,6 +7,7 @@ import spacy
 import re
 from AP_article_builder import ap_article_dict_builder, ap_article_full_txt
 from spacy_methods import sentence_generator, verb_matcher, get_specific_entities, entity_counter, verb_in_sentence
+from db_interaction import hash_string, article_reference_table_insert, verbs_reference_table_insert, entity_reference_table_insert
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///NLPdatabase.db'
@@ -115,6 +116,7 @@ class Search(db.Model):
     title = db.Column(db.String(250), default="Untitled")
     search_datetime = db.Column(db.DateTime, default=datetime.utcnow)
     searched = db.Column(db.Boolean, default=False)
+    analyzed = db.Column(db.Boolean, default=False)
 
     def __repr__(self):
         return('<Search %r>' % self.id)
@@ -151,39 +153,55 @@ def search_delete(id):
     except:
         return 'There was an issue deleting this search.'
 
-@app.route('/article/analysis/<int:id>', methods=["GET", "POST"])
+@app.route('/article/<int:id>', methods=["GET", "POST"])
 def article_search(id):
     article_to_search = Search.query.get_or_404(id)
     try:
         url = article_to_search.url
+        analyzed = article_to_search.analyzed
+        print(analyzed)
         if url is not None:
-            article_dict = ap_article_dict_builder(url)
-            article_txt = ap_article_full_txt(url)
-            nlp = spacy.load("en_core_web_md")
+            if analyzed == False:
+                article_dict = ap_article_dict_builder(url)
+                article_txt = ap_article_full_txt(url)
+                nlp = spacy.load("en_core_web_md")
 
-            # Initialize the Doc object, generate sentences, verbs, entities, from the article
-            doc = nlp(article_txt)
-            sentences = sentence_generator(doc)
-            verbs = verb_matcher(doc)
-            entities = get_specific_entities(sentences)
-            raw_entity_list = list(entities)
-            duplicate_items = entity_counter(entities)
-            the_verbs = verb_in_sentence(verbs, sentences, doc)
+                # Initialize the Doc object, generate sentences, verbs, entities, from the article
+                doc = nlp(article_txt)
+                
+                # Sentences
+                sentences = sentence_generator(doc)
+                
+                # Raw Entities
+                entities = get_specific_entities(sentences)
+                raw_entity_list = list(entities)
+                duplicate_items = entity_counter(entities)
+                
+                # Verbs
+                verbs = verb_matcher(doc)
+                the_verbs = verb_in_sentence(verbs, sentences, doc)
 
-            new_title = article_dict["headline"]
-            is_searched = True 
+                article_reference_table_insert(sentences)
+                verbs_reference_table_insert(the_verbs)
+                entity_reference_table_insert(raw_entity_list)
 
-            
-            article_to_search.title = new_title
-            article_to_search.searched = is_searched
-            db.session.add(article_to_search)
-            db.session.commit()
+                art_id_hash = hash_string(art_headline)
+
+                is_analyzed = True
+                article_to_search.analyzed = is_analyzed
+                db.session.add(article_to_search)
+                db.session.commit()
+            elif analyzed == True:
+                print("already analyzed")
+            else:
+                article_to_search.analyzed = False
+                return redirect('/')
             
     except:
         pass
 
+    print(is_analyzed)
     return render_template('analysis.html')
-
 
 with app.app_context():
     db.metadata.create_all(bind=db.engine, tables=[Article.__table__, Entity.__table__, Verb.__table__, Search.__table__])

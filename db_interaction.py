@@ -65,7 +65,7 @@ modified_time = article_dict["modified_time"]
 
 
 def article_reference_table_insert(sent_list: list) -> None:
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect("NLPdatabase.db")
     cursor = conn.cursor()
 
     # Table creation - Unique article reference table
@@ -131,7 +131,7 @@ def article_reference_table_insert(sent_list: list) -> None:
 
 def verbs_reference_table_insert(verbs_list: list) -> None:
 
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect("NLPdatabase.db")
     cursor = conn.cursor()
 
     # Table creation - Verbs
@@ -229,7 +229,7 @@ def verbs_reference_table_insert(verbs_list: list) -> None:
 
 def entity_reference_table_insert(entity_list: list) -> None:
 
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect("NLPdatabase.db")
     cursor = conn.cursor()
 
     # Table creation - Entities

@@ -32,3 +32,11 @@ table, th, td {
     text-align: left;
     display: inline-block;
 }
+
+#NewsURL {
+    width: 30%;
+}
+
+#NewsURL::placeholder {
+    text-align: center;
+}
