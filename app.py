@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from datetime import datetime
 from spacy.tokens import Doc
+import sqlite3
 import spacy
 import re
 from AP_article_builder import ap_article_dict_builder, ap_article_full_txt
@@ -166,9 +167,19 @@ def article_search(id):
                 article_txt = ap_article_full_txt(url)
                 nlp = spacy.load("en_core_web_md")
 
+                art_headline = article_dict["headline"]
+                art_id_hash = hash_string(art_headline)
+                list_author = article_dict["author(s)"]
+                art_author = ",".join(list_author)
+                source_url = article_dict["self_URL"]
+                published_time = article_dict["published_time"] 
+                modified_time = article_dict["modified_time"]
+
                 # Initialize the Doc object, generate sentences, verbs, entities, from the article
                 doc = nlp(article_txt)
                 
+                print("hello")
+
                 # Sentences
                 sentences = sentence_generator(doc)
                 
@@ -181,14 +192,28 @@ def article_search(id):
                 verbs = verb_matcher(doc)
                 the_verbs = verb_in_sentence(verbs, sentences, doc)
 
-                article_reference_table_insert(sentences)
-                verbs_reference_table_insert(the_verbs)
-                entity_reference_table_insert(raw_entity_list)
+                # article_reference_table_insert(sentences)
+                # verbs_reference_table_insert(the_verbs)
+                # entity_reference_table_insert(raw_entity_list)
 
-                art_id_hash = hash_string(art_headline)
+                print("hello")
+
+                for i, sent in enumerate(sentences):
+                    sentenceClass = Article(art_headline = art_headline,
+                            art_id_hash = art_id_hash,
+                            sentence_id = i,
+                            sentence_contents=sent,
+                            authors = art_author,
+                            source_url = source_url,
+                            published_time = published_time,
+                            modified_time = modified_time
+                       )
+                    print(sent)
+                    db.session.add(sentenceClass)
+                db.session.commit()
 
                 is_analyzed = True
-                article_to_search.analyzed = is_analyzed
+                # article_to_search.analyzed = is_analyzed
                 db.session.add(article_to_search)
                 db.session.commit()
             elif analyzed == True:
@@ -200,7 +225,7 @@ def article_search(id):
     except:
         pass
 
-    print(is_analyzed)
+    # print(is_analyzed)
     return render_template('analysis.html')
 
 with app.app_context():

@@ -119,6 +119,6 @@ def alter_table():
 
 
 article_reference_table_create()
-verbs_reference_table_create()
-entity_reference_table_create()
-search_reference_table_create()
+# verbs_reference_table_create()
+# entity_reference_table_create()
+# search_reference_table_create()
