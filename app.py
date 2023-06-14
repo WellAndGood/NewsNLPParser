@@ -28,6 +28,7 @@ class Article(db.Model):
     source_url = db.Column(db.Text)
     published_time = db.Column(db.Text)
     modified_time = db.Column(db.Text)
+    # search_id = db.Column(db.Integer, db.ForeignKey('SEARCHES_REFERENCE.id'), nullable=True)
 
     def __init__(self, art_id_hash, 
                  art_headline, sentence_id, 
@@ -42,9 +43,10 @@ class Article(db.Model):
         self.source_url = source_url
         self.published_time = published_time
         self.modified_time = modified_time
+        # search_id = search_id
     
     def __repr__(self):
-        return '<Article %r>' % self.id
+        return '<Article %r>' % self.sentence_contents[:25]
 
 class Verb(db.Model):
     # Define Verbs_Reference's columns and properties here
@@ -107,7 +109,7 @@ class Entity(db.Model):
         self.modified_time = modified_time
 
     def __repr__(self):
-        return '<Entity %r>' % self.id
+        return '<Entity %r>' % self.entity_text
 
 # Will enter web searches to database
 class Search(db.Model):
@@ -118,6 +120,7 @@ class Search(db.Model):
     search_datetime = db.Column(db.DateTime, default=datetime.utcnow)
     searched = db.Column(db.Boolean, default=False)
     analyzed = db.Column(db.Boolean, default=False)
+    #article_reference = db.Column(db.String(250), db.foreignKey('ARTICLES_REFERENCE.art_id_hash'), nullable=True)
 
     def __repr__(self):
         return('<Search %r>' % self.id)
@@ -154,76 +157,119 @@ def search_delete(id):
     except:
         return 'There was an issue deleting this search.'
 
+@app.route('/article/sentences')
+def view_all_articles():
+    articles = Article.query.all()
+
+    return render_template('sentences.html', articles=articles)
+
+@app.route('/article/entities')
+def view_all_entities():
+    entities = Entity.query.all()
+
+    return render_template('entities.html', entities=entities)
+
+@app.route('/article/verbs')
+
+def view_all_verbs():
+    verbs = Verb.query.all()
+
+    return render_template('verbs.html', verbs=verbs)
+
+
+
+# To analyze the contents of an article's URL, store them to DBs
 @app.route('/article/<int:id>', methods=["GET", "POST"])
 def article_search(id):
     article_to_search = Search.query.get_or_404(id)
-    try:
-        url = article_to_search.url
-        analyzed = article_to_search.analyzed
-        print(analyzed)
-        if url is not None:
-            if analyzed == False:
-                article_dict = ap_article_dict_builder(url)
-                article_txt = ap_article_full_txt(url)
-                nlp = spacy.load("en_core_web_md")
+    # try:
+    url = article_to_search.url
+    analyzed = article_to_search.analyzed
+    print(analyzed)
+    if url is not None:
+        if analyzed == False:
+            article_dict = ap_article_dict_builder(url)
+            article_txt = ap_article_full_txt(url)
+            nlp = spacy.load("en_core_web_md")
 
-                art_headline = article_dict["headline"]
-                art_id_hash = hash_string(art_headline)
-                list_author = article_dict["author(s)"]
-                art_author = ",".join(list_author)
-                source_url = article_dict["self_URL"]
-                published_time = article_dict["published_time"] 
-                modified_time = article_dict["modified_time"]
+            art_headline = article_dict["headline"]
+            art_id_hash = hash_string(art_headline)
+            list_author = article_dict["author(s)"]
+            art_author = ",".join(list_author)
+            source_url = article_dict["self_URL"]
+            published_time = article_dict["published_time"] 
+            modified_time = article_dict["modified_time"]
 
-                # Initialize the Doc object, generate sentences, verbs, entities, from the article
-                doc = nlp(article_txt)
-                
-                print("hello")
+            # Initialize the Doc object, generate sentences, verbs, entities, from the article
+            doc = nlp(article_txt)
 
-                # Sentences
-                sentences = sentence_generator(doc)
-                
-                # Raw Entities
-                entities = get_specific_entities(sentences)
-                raw_entity_list = list(entities)
-                duplicate_items = entity_counter(entities)
-                
-                # Verbs
-                verbs = verb_matcher(doc)
-                the_verbs = verb_in_sentence(verbs, sentences, doc)
-
-                # article_reference_table_insert(sentences)
-                # verbs_reference_table_insert(the_verbs)
-                # entity_reference_table_insert(raw_entity_list)
-
-                print("hello")
-
-                for i, sent in enumerate(sentences):
-                    sentenceClass = Article(art_headline = art_headline,
-                            art_id_hash = art_id_hash,
-                            sentence_id = i,
-                            sentence_contents=sent,
-                            authors = art_author,
-                            source_url = source_url,
-                            published_time = published_time,
-                            modified_time = modified_time
-                       )
-                    print(sent)
-                    db.session.add(sentenceClass)
-                db.session.commit()
-
-                is_analyzed = True
-                # article_to_search.analyzed = is_analyzed
-                db.session.add(article_to_search)
-                db.session.commit()
-            elif analyzed == True:
-                print("already analyzed")
-            else:
-                article_to_search.analyzed = False
-                return redirect('/')
+            # Sentences
+            sentences = sentence_generator(doc)
             
-    except:
-        pass
+            # Raw Entities
+            entities = get_specific_entities(sentences)
+            raw_entity_list = list(entities)
+            duplicate_items = entity_counter(entities)
+            
+            # Verbs
+            verbs = verb_matcher(doc)
+            the_verbs = verb_in_sentence(verbs, sentences, doc)
+
+            for i, sent in enumerate(sentences):
+                sentenceClass = Article(art_headline = art_headline,
+                        art_id_hash = art_id_hash,
+                        sentence_id = i,
+                        sentence_contents=sent,
+                        authors = art_author,
+                        source_url = source_url,
+                        published_time = published_time,
+                        modified_time = modified_time,
+                        # search_id = id
+                    )
+                db.session.add(sentenceClass)
+
+            for i, entity in enumerate(raw_entity_list):
+                entityClass = Entity(art_id_hash=art_id_hash,
+                                    art_headline=art_headline,
+                                    entity_text=entity[0],
+                                    entity_type=entity[1],
+                                    word_index_start=entity[2],
+                                    word_index_end=entity[3],
+                                    sentence_id = i,
+                                    timestamp=datetime.now(),
+                                    modified_time=modified_time)
+                db.session.add(entityClass)
+
+
+            for i, verb in enumerate(the_verbs):
+                verbClass = Verb(art_id_hash=art_id_hash,
+                                    art_headline=art_headline,
+                                    verb_text = verb[0],
+                                    lemmatized_text = verb[1],
+                                    article_word_index = verb[2],
+                                    sentence_id = verb[4],
+                                    sent_word_index = verb[5],
+                                    timestamp=datetime.now(),
+                                    modified_time=modified_time
+                )
+                print(verb)
+                db.session.add(verbClass)
+
+            is_analyzed = True
+            article_to_search.analyzed = is_analyzed
+            db.session.add(article_to_search)
+            db.session.commit()
+
+        elif analyzed == True:
+            print("already analyzed")
+        else:
+            article_to_search.analyzed = False
+            db.session.add(article_to_search)
+            db.session.commit()
+            return redirect('/')
+            
+    # except:
+    #     pass
 
     # print(is_analyzed)
     return render_template('analysis.html')

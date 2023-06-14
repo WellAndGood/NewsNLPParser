@@ -41,7 +41,11 @@
             <td class="title-column">{{ search.title }}</td>
             <td class="url-column"><a href="{{search.url}}" target="_blank">{{ search.url }}</a></td>
             <td>{{ search.search_datetime.date() }}</td>
-            <td><a href="/article/{{search.id}}">Analyse</td>
+            <td><a href="/article/{{search.id}}">Analyse
+                <a href="/article/sentences">Sentences</a>
+                <a href="/article/entities">Entities</a>
+                <a href="/article/verbs">Verbs</a>
+            </td>
             <!-- {% if search.analyzed == False %}
             <td>Not Analyzed</td>
             {% elif search.analyzed == True %}
@@ -52,6 +56,7 @@
             </td>
         </tr>
         {% endfor %}
+        
     </table>
 
     {% endif %}
