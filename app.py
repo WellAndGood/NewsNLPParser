@@ -28,13 +28,13 @@ class Article(db.Model):
     source_url = db.Column(db.Text)
     published_time = db.Column(db.Text)
     modified_time = db.Column(db.Text)
-    search = db.Column(db.Integer)
+    search_id = db.Column(db.Integer)
 
     def __init__(self, art_id_hash, 
                  art_headline, sentence_id, 
                  sentence_contents, authors, 
                  source_url, published_time, 
-                 modified_time, search):
+                 modified_time, search_id):
         self.art_id_hash = art_id_hash
         self.art_headline = art_headline
         self.sentence_id = sentence_id
@@ -43,7 +43,7 @@ class Article(db.Model):
         self.source_url = source_url
         self.published_time = published_time
         self.modified_time = modified_time
-        search = search
+        search_id = search_id
 
     
     def __repr__(self):
@@ -157,7 +157,7 @@ def search_delete(id):
     #try:
 
     # Delete the associate article (sentences)
-    Article.query.filter_by(search_id=id).delete()
+    Article.query.filter_by(search=id).delete()
 
     # Delete the associated entities
     Entity.query.filter_by(search_id=id).delete()
@@ -173,8 +173,8 @@ def search_delete(id):
 
 @app.route('/article/sentences/<int:id>')
 def view_all_articles(id):
-    # articles = Article.query.filter_by(search_id=id).all()
-    articles = Article.query.all()
+    articles = Article.query.filter_by(search=id).all()
+    # articles = Article.query.all()
     
     print(articles)
     return render_template('sentences.html', articles=articles)
