@@ -13,25 +13,25 @@
     {% if verbs|length < 1 %}
     <h4 style="text-align: center">There are no saved verbs.</h4>
     {% else %}
-
+    <h2>{{ verbs[0].art_headline }}</h2>
     <table>
         <tr>
-            <th>Headline</th>
             <th>Verb</th>
             <th>Lemma</th>
             <th>Index</th>
             <th>Sentence ID</th>    
-            <th>Word in Sentence Index</th>    
+            <th>Word in Sentence Index</th>
+            <th>Search ID</th>    
         </tr>
             
         {% for verb in verbs %}
         <tr>
-            <td>{{verb.art_headline}}</td>
             <td>{{verb.verb_text}}</td>
             <td>{{verb.lemmatized_text }}</td>
             <td>{{verb.article_word_index}}</td>
             <td>{{verb.sentence_id}}</td>
             <td>{{verb.sent_word_index }}</td>
+            <td>{{verb.search_id}}</td>
         </tr>
         {% endfor %}
 

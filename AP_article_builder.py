@@ -14,7 +14,11 @@ def ap_article_dict_builder(url: str) -> Dict:
 
     # Retrieves canonical link
     canonical_links = ap_article.find_all("link", rel="canonical")
-    self_URL = canonical_links[-1].get("href")
+    
+    try:
+        self_URL = canonical_links[-1].get("href")
+    except IndexError:
+        self_URL = "none"
 
     article_information["self_URL"] = self_URL
 

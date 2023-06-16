@@ -13,24 +13,23 @@
     {% if entities|length < 1 %}
     <h4 style="text-align: center">There are no saved entities.</h4>
     {% else %}
-
+    <h2>{{ entities[0].art_headline }}</h2>
         <table>
-
-        <tr>
-                <th>Headline</th>
+            <tr>
                 <th>Entity</th>
                 <th>Word Start</th>
                 <th>Word End</th>    
-                <th>Sentence ID</th>    
+                <th>Sentence ID</th>
+                <th>Search ID</th>  
             </tr>
             
             {% for entity in entities %}
             <tr>
-                <td>{{entity.art_headline}}</td>
                 <td>{{entity.entity_text}}</td>
                 <td>{{entity.word_index_start}}</td>
                 <td>{{entity.word_index_end}}</td>
                 <td>{{entity.sentence_id }}</td>
+                <td>{{entity.search }}</td>
             </tr>
             {% endfor %}
     

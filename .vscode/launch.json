@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Anaconda",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/your_script.py",
+            "python": "${env:HOME}/anaconda3/bin/python",
+            "env": {},
+            "console": "integratedTerminal"            
+        }
+    ]
+}

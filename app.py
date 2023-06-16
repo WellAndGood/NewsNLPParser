@@ -28,13 +28,13 @@ class Article(db.Model):
     source_url = db.Column(db.Text)
     published_time = db.Column(db.Text)
     modified_time = db.Column(db.Text)
-    # search_id = db.Column(db.Integer, db.ForeignKey('SEARCHES_REFERENCE.id'), nullable=True)
+    search = db.Column(db.Integer)
 
     def __init__(self, art_id_hash, 
                  art_headline, sentence_id, 
                  sentence_contents, authors, 
                  source_url, published_time, 
-                 modified_time):
+                 modified_time, search):
         self.art_id_hash = art_id_hash
         self.art_headline = art_headline
         self.sentence_id = sentence_id
@@ -43,10 +43,11 @@ class Article(db.Model):
         self.source_url = source_url
         self.published_time = published_time
         self.modified_time = modified_time
-        # search_id = search_id
+        search = search
+
     
     def __repr__(self):
-        return '<Article %r>' % self.sentence_contents[:25]
+        return '<Article %r>' % self.sentence_contents
 
 class Verb(db.Model):
     # Define Verbs_Reference's columns and properties here
@@ -61,12 +62,13 @@ class Verb(db.Model):
     sent_word_index = db.Column(db.Integer)
     timestamp = db.Column(db.Text)
     modified_time = db.Column(db.Text)
+    search_id = db.Column(db.Integer, nullable=True)
 
     def __init__(self, art_id_hash, 
                  art_headline, verb_text, 
                  lemmatized_text, article_word_index, 
                  sentence_id, sent_word_index, 
-                 timestamp, modified_time):
+                 timestamp, modified_time, search_id):
         self.art_id_hash = art_id_hash
         self.art_headline = art_headline
         self.verb_text = verb_text
@@ -76,6 +78,7 @@ class Verb(db.Model):
         self.sent_word_index = sent_word_index
         self.timestamp = timestamp
         self.modified_time = modified_time
+        self.search_id = search_id
 
     def __repr__(self):
         return '<Verb %r>' % self.id
@@ -92,12 +95,13 @@ class Entity(db.Model):
     sentence_id = db.Column(db.Integer)
     timestamp = db.Column(db.Text)
     modified_time = db.Column(db.Text)
+    search_id = db.Column(db.Integer, nullable=True)
 
     def __init__(self, art_id_hash, 
                  art_headline, entity_text, 
                  entity_type, word_index_start, 
                  word_index_end, sentence_id, 
-                 timestamp, modified_time):
+                 timestamp, modified_time, search_id):
         self.art_id_hash = art_id_hash
         self.art_headline = art_headline
         self.entity_text = entity_text
@@ -107,9 +111,10 @@ class Entity(db.Model):
         self.sentence_id = sentence_id
         self.timestamp = timestamp
         self.modified_time = modified_time
+        self.search_id = search_id
 
     def __repr__(self):
-        return '<Entity %r>' % self.entity_text
+        return '<Entity %r>' % self.search_id
 
 # Will enter web searches to database
 class Search(db.Model):
@@ -120,7 +125,6 @@ class Search(db.Model):
     search_datetime = db.Column(db.DateTime, default=datetime.utcnow)
     searched = db.Column(db.Boolean, default=False)
     analyzed = db.Column(db.Boolean, default=False)
-    #article_reference = db.Column(db.String(250), db.foreignKey('ARTICLES_REFERENCE.art_id_hash'), nullable=True)
 
     def __repr__(self):
         return('<Search %r>' % self.id)
@@ -150,30 +154,39 @@ def index():
 @app.route('/delete/<int:id>')
 def search_delete(id):
     search_to_delete = Search.query.get_or_404(id)
-    try:
-        db.session.delete(search_to_delete)
-        db.session.commit()
-        return redirect('/')
-    except:
-        return 'There was an issue deleting this search.'
+    #try:
 
-@app.route('/article/sentences')
-def view_all_articles():
+    # Delete the associate article (sentences)
+    Article.query.filter_by(search_id=id).delete()
+
+    # Delete the associated entities
+    Entity.query.filter_by(search_id=id).delete()
+
+    # Delete the associated verbs
+    Verb.query.filter_by(search_id=id).delete()
+
+    db.session.delete(search_to_delete)
+    db.session.commit()
+    return redirect('/')
+    # except:
+    #     return 'There was an issue deleting this search.'
+
+@app.route('/article/sentences/<int:id>')
+def view_all_articles(id):
+    # articles = Article.query.filter_by(search_id=id).all()
     articles = Article.query.all()
-
+    
+    print(articles)
     return render_template('sentences.html', articles=articles)
 
-@app.route('/article/entities')
-def view_all_entities():
-    entities = Entity.query.all()
-
+@app.route('/article/entities/<int:id>')
+def view_all_entities(id):
+    entities = Entity.query.filter_by(search_id=id).all()
     return render_template('entities.html', entities=entities)
 
-@app.route('/article/verbs')
-
-def view_all_verbs():
-    verbs = Verb.query.all()
-
+@app.route('/article/verbs/<int:id>')
+def view_all_verbs(id):
+    verbs = Verb.query.filter_by(search_id=id).all()
     return render_template('verbs.html', verbs=verbs)
 
 
@@ -216,6 +229,7 @@ def article_search(id):
             the_verbs = verb_in_sentence(verbs, sentences, doc)
 
             for i, sent in enumerate(sentences):
+                print(sent)
                 sentenceClass = Article(art_headline = art_headline,
                         art_id_hash = art_id_hash,
                         sentence_id = i,
@@ -224,8 +238,9 @@ def article_search(id):
                         source_url = source_url,
                         published_time = published_time,
                         modified_time = modified_time,
-                        # search_id = id
-                    )
+                        search = id )
+                
+                print(id)
                 db.session.add(sentenceClass)
 
             for i, entity in enumerate(raw_entity_list):
@@ -237,7 +252,8 @@ def article_search(id):
                                     word_index_end=entity[3],
                                     sentence_id = i,
                                     timestamp=datetime.now(),
-                                    modified_time=modified_time)
+                                    modified_time=modified_time,
+                                    search_id = id)
                 db.session.add(entityClass)
 
 
@@ -250,9 +266,8 @@ def article_search(id):
                                     sentence_id = verb[4],
                                     sent_word_index = verb[5],
                                     timestamp=datetime.now(),
-                                    modified_time=modified_time
-                )
-                print(verb)
+                                    modified_time=modified_time,
+                                    search_id = id )
                 db.session.add(verbClass)
 
             is_analyzed = True
