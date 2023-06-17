@@ -9,10 +9,13 @@ import re
 from AP_article_builder import ap_article_dict_builder, ap_article_full_txt
 from spacy_methods import sentence_generator, verb_matcher, get_specific_entities, entity_counter, verb_in_sentence
 from db_interaction import hash_string, article_reference_table_insert, verbs_reference_table_insert, entity_reference_table_insert
+import os
 
+app_dir = os.path.dirname(os.path.abspath(__file__))
+os.makedirs(os.path.join(app_dir, "db"), exist_ok=True)
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///NLPdatabase.db'
-app.secret_key = 'your_secret_key'
+app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///" + os.path.join(app_dir, "db", "NLPdatabase.db")
+# app.secret_key = 'your_secret_key'
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
@@ -157,7 +160,7 @@ def search_delete(id):
     #try:
 
     # Delete the associate article (sentences)
-    Article.query.filter_by(search=id).delete()
+    Article.query.filter_by(search_id=id).delete()
 
     # Delete the associated entities
     Entity.query.filter_by(search_id=id).delete()
@@ -173,7 +176,7 @@ def search_delete(id):
 
 @app.route('/article/sentences/<int:id>')
 def view_all_articles(id):
-    articles = Article.query.filter_by(search=id).all()
+    articles = Article.query.filter_by(search_id=id).all()
     # articles = Article.query.all()
     
     print(articles)
@@ -238,7 +241,7 @@ def article_search(id):
                         source_url = source_url,
                         published_time = published_time,
                         modified_time = modified_time,
-                        search = id )
+                        search_id = id )
                 
                 print(id)
                 db.session.add(sentenceClass)
