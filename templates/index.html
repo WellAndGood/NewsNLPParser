@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block head %}
+{{ super() }}
+<title>AP News - Natural Language Parser</title>
+{% endblock %}
+
+{% block body %}
+<div class="content">
+    <h1 class="center">AP News - Natural Language Parser</h1>
+    <p class="center narrow">This application serves to demonstrate the practical use of natural language processing and machine learning libraries to analyze the news.</p>
+    <p class="center narrow">It is limited to the Associated Press as a source because each website requires its own web scraping method, requiring large amounts of development time towards scraping, and taking away from text analysis/data visualization. </p>
+    <form style="text-align: center"  action="/" method="POST">
+        <input type="text" name="NewsURL" id="NewsURL" placeholder="Enter AP News URL Here">
+        <input type="submit" value="Search News">
+    </form>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <ul class="errMessages">
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+    {% if searches|length < 1 %}
+    <h4 style="text-align: center">There are no saved searches. Create one by searching</h4>
+    {% else %}
+    <table>
+        <tr>
+            <th>Title</th>
+            <th>URL</th>
+            <th>Date</th>
+            <th>Analysis</th>
+            <th>Actions</th>
+        </tr>
+        {% for search in searches %}
+        <tr>
+            <td class="title-column">{{ search.title }}</td>
+            <td class="url-column"><a href="{{search.url}}" target="_blank">{{ search.url }}</a></td>
+            <td>{{ search.search_datetime.date() }}</td>
+            <td>
+                {% if search.analyzed %}
+                    <a href="/article/sentences/{{search.id}}">Sentences</a>
+                    <a href="/article/entities/{{search.id}}">Entities</a>
+                    <a href="/article/verbs/{{search.id}}">Verbs</a>
+                {% else %}
+                    <a href="/article/{{search.id}}">Analyse</a>
+                {% endif %}
+            </td>
+            <td>
+                <a href="/delete/{{search.id}}" onclick="return confirmDeletion(event)">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% endif %}
+</div>
+{% endblock %}

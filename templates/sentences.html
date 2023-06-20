@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block head %}
+
+{% endblock %}
+
+{% block body %}
+
+    <div class="content">
+        <a href="/">Return to main page</a>
+    </div>
+
+    {% if articles|length < 1 %}
+    <h4 style="text-align: center">There are no saved searches. Create one by searching</h4>
+    {% else %}
+    
+        {% for article in articles %}
+            {% if article.sentence_id == 0 %}
+
+                <h2>Title: {{article.art_headline}}</h2>
+                <p><b>Author:</b>{{article.authors}}</p>
+                <p><b>URL:</b> <a href="{{article.source_url}}" target="_blank">Link/URL</a></p>
+                <p><b>Published Time:</b> {{article.published_time}}</p>
+                <p><b>Modified Time:</b> {{article.modified_time}}</p>
+                <p>{{article.sentence_id}}: {{article.sentence_contents}}</p>
+
+            {% else %}
+                <p>{{article.sentence_id}}: {{article.sentence_contents}}</p>
+            {% endif %}
+        
+        {% endfor %}
+    
+    {% endif %}
+
+{% endblock %}

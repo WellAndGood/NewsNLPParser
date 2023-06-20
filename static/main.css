@@ -1,0 +1,47 @@
+body {
+    margin: 0;
+    font-family: sans-serif;
+}
+
+table {
+    border-collapse: collapse;
+    margin: 10px auto
+}
+
+table, th, td {
+    border: 1px solid black; /* Add a 1px black solid border */
+    padding: 4px;
+  }
+
+.url-column {
+    word-wrap: break-word;
+    max-width: 300px;
+}
+
+.title-column {
+    word-wrap: break-word;
+    max-width: 300px;
+}
+
+.errMessages {
+    text-align: center
+}
+
+.errMessages li {
+    color: red;
+    text-align: left;
+    display: inline-block;
+}
+
+.center {
+    text-align: center;
+    margin: 15px 15%;
+}
+
+#NewsURL {
+    width: 30%;
+}
+
+#NewsURL::placeholder {
+    text-align: center;
+}

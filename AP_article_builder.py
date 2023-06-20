@@ -14,7 +14,11 @@ def ap_article_dict_builder(url: str) -> Dict:
 
     # Retrieves canonical link
     canonical_links = ap_article.find_all("link", rel="canonical")
-    self_URL = canonical_links[-1].get("href")
+    
+    try:
+        self_URL = canonical_links[-1].get("href")
+    except IndexError:
+        self_URL = "none"
 
     article_information["self_URL"] = self_URL
 
@@ -44,7 +48,10 @@ def ap_article_dict_builder(url: str) -> Dict:
 
     # Retrieves image data
     image_data = []
-    image_url = json_script["image"]
+    try:
+        image_url = json_script["image"]
+    except KeyError:
+        image_url = ""
     image_caption_div = ap_article.find_all("div", attrs={"data-key": "embed-caption"})
     image_caption = image_caption_div[0].text
     try:
@@ -87,7 +94,6 @@ def ap_article_dict_builder(url: str) -> Dict:
     article_information["mainContents"] = article_paragraphs
 
     return article_information
-
 
 def ap_article_full_txt(url: str) -> Optional[str]:
     article_dict = ap_article_dict_builder(url)
