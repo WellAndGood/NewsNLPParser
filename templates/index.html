@@ -11,7 +11,6 @@
     <p class="center narrow">This application serves to demonstrate the practical use of natural language processing and machine learning libraries to analyze the news.</p>
     <p class="center narrow">It is limited to the Associated Press as a source because each website requires its own web scraping method, requiring large amounts of development time towards scraping, and taking away from text analysis/data visualization. </p>
     <form style="text-align: center"  action="/" method="POST">
-        <!-- name and id were previously named 'content'  -->
         <input type="text" name="NewsURL" id="NewsURL" placeholder="Enter AP News URL Here">
         <input type="submit" value="Search News">
     </form>
@@ -33,7 +32,6 @@
             <th>URL</th>
             <th>Date</th>
             <th>Analysis</th>
-            <!-- <th>Revert</th> -->
             <th>Actions</th>
         </tr>
         {% for search in searches %}
@@ -55,9 +53,7 @@
             </td>
         </tr>
         {% endfor %}
-        
     </table>
-
     {% endif %}
 </div>
 {% endblock %}

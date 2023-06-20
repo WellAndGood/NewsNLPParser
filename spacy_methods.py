@@ -6,15 +6,13 @@ from typing import Dict, List, Union
 
 nlp = spacy.load("en_core_web_md")
 
-# https://apnews.com/article/george-santos-federal-charges-updates-33667a0900271e5002459ab748d8fdc8?utm_source=homepage&utm_medium=TopNews&utm_campaign=position_01
-
-# Base URL, and use
+# Temporary stand-in URL
 url = "https://apnews.com/article/george-santos-federal-charges-updates-33667a0900271e5002459ab748d8fdc8?utm_source=homepage&utm_medium=TopNews&utm_campaign=position_01"
 article_dict = ap_article_dict_builder(url)
 article_txt = ap_article_full_txt(url)
 
 # Initialize the Doc object
-doc = nlp(article_txt)
+doc = nlp(url)
 
 # Generate list of sentences from Doc object
 def sentence_generator(txt: str) -> List[str]:
@@ -22,14 +20,12 @@ def sentence_generator(txt: str) -> List[str]:
     sentences = [sent.text for sent in doc.sents]
     return list(sentences)
 
-
 sentences = sentence_generator(doc)
 
 # Retrieve and store entities
 def get_specific_entities(sentences: list) -> List[Union[str, int]]:
     specific_entities = []
     sentence_count = -1
-    previous_sentence = None
 
     word_count = 0
 
@@ -70,13 +66,11 @@ def get_specific_entities(sentences: list) -> List[Union[str, int]]:
         word_count += len(doc)
     return specific_entities
 
-
 entities = get_specific_entities(sentences)
 
 # Counts the number of distinct times an entity appears in the article.
 def entity_counter(lst) -> Dict[str, int]:
 
-    raw_entity_list = list(entities)
     count_dict = {}
 
     # Index the list elements to a dictionary and increment their counts
@@ -88,7 +82,6 @@ def entity_counter(lst) -> Dict[str, int]:
         else:
             count_dict[entity_sentence_check] = 1
     return count_dict
-
 
 duplicate_items = entity_counter(entities)
 
@@ -108,8 +101,8 @@ def entity_indexer(lst: list) -> Dict[str, List[int]]:
     for i, entity_item in enumerate(lst):
         entity_sentence_check = "{}".format(entity_item[0])
 
-        # entity_item[0] - Entity's name as a string
-        # entity_item[5] - the sentence number index
+        ### entity_item[0] - Entity's name as a string
+        ### entity_item[5] - the sentence number index
 
         append_to_array(entity_item[0], entity_item[5], ent_index_dict)
     return ent_index_dict
@@ -125,14 +118,12 @@ def verb_matcher(doc: Doc) -> List[Union[int, str]]:
     verb_information = []
 
     for match in matches:
-
         word_index = match[1]
         original_verb = doc[match[1]]
         lemmatized_verb = doc[match[1]].lemma_
         verb_information.append([word_index, original_verb, lemmatized_verb])
 
     return verb_information
-
 
 # List of Verbs
 verbs = verb_matcher(doc)
@@ -146,8 +137,6 @@ def verb_in_sentence(list_of_verbs: list, list_of_sentences: list, doc: Doc) -> 
     nlp = spacy.load("en_core_web_md")
     specific_verbs = []
     sentence_count = -1
-    previous_sentence = None
-
     word_count = 0
 
     for i, sent in enumerate(list_of_sentences):
@@ -156,14 +145,11 @@ def verb_in_sentence(list_of_verbs: list, list_of_sentences: list, doc: Doc) -> 
         # Check the sentence's text matches the previous sentence's
         try:
             doc = nlp(sent)
-            # print(doc)
             sentence = doc.text
 
             for token in doc:
                 word_count += 1
                 if token.pos_ == "VERB":
-
-                    # verb_index = word_count + token.i
                     verb_text = token.text
                     verb_lemma = token.lemma_
                     sent_word_index = (
