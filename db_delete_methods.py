@@ -17,3 +17,16 @@ def table_delete(table_name: str) -> AnyStr:
 # table_delete("ARTICLES_REFERENCE")
 # table_delete("VERBS_REFERENCE")
 # table_delete("ENTITIES_REFERENCE")
+
+
+def null_id_delete() :
+    conn = sqlite3.connect("db/NLPdatabase.db")
+    cursor = conn.cursor()
+
+    # Table creation - Unique article reference table
+    cursor.execute("DELETE FROM ARTICLES_REFERENCE WHERE search_id IS NULL")
+
+    conn.commit()
+    conn.close()
+
+null_id_delete()

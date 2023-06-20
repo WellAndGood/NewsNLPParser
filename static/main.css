@@ -33,6 +33,11 @@ table, th, td {
     display: inline-block;
 }
 
+.center {
+    text-align: center;
+    margin: 15px 15%;
+}
+
 #NewsURL {
     width: 30%;
 }

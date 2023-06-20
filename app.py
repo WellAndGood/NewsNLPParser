@@ -10,6 +10,13 @@ from AP_article_builder import ap_article_dict_builder, ap_article_full_txt
 from spacy_methods import sentence_generator, verb_matcher, get_specific_entities, entity_counter, verb_in_sentence
 from db_interaction import hash_string, article_reference_table_insert, verbs_reference_table_insert, entity_reference_table_insert
 import os
+import sys
+
+# Get the current file directory
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Add the directory to the Python path
+sys.path.append(current_dir)
 
 app_dir = os.path.dirname(os.path.abspath(__file__))
 os.makedirs(os.path.join(app_dir, "db"), exist_ok=True)
@@ -46,7 +53,7 @@ class Article(db.Model):
         self.source_url = source_url
         self.published_time = published_time
         self.modified_time = modified_time
-        search_id = search_id
+        self.search_id = search_id
 
     
     def __repr__(self):
@@ -177,9 +184,6 @@ def search_delete(id):
 @app.route('/article/sentences/<int:id>')
 def view_all_articles(id):
     articles = Article.query.filter_by(search_id=id).all()
-    # articles = Article.query.all()
-    
-    print(articles)
     return render_template('sentences.html', articles=articles)
 
 @app.route('/article/entities/<int:id>')
@@ -191,8 +195,6 @@ def view_all_entities(id):
 def view_all_verbs(id):
     verbs = Verb.query.filter_by(search_id=id).all()
     return render_template('verbs.html', verbs=verbs)
-
-
 
 # To analyze the contents of an article's URL, store them to DBs
 @app.route('/article/<int:id>', methods=["GET", "POST"])
@@ -232,7 +234,6 @@ def article_search(id):
             the_verbs = verb_in_sentence(verbs, sentences, doc)
 
             for i, sent in enumerate(sentences):
-                print(sent)
                 sentenceClass = Article(art_headline = art_headline,
                         art_id_hash = art_id_hash,
                         sentence_id = i,
@@ -242,8 +243,6 @@ def article_search(id):
                         published_time = published_time,
                         modified_time = modified_time,
                         search_id = id )
-                
-                print(id)
                 db.session.add(sentenceClass)
 
             for i, entity in enumerate(raw_entity_list):
@@ -258,7 +257,6 @@ def article_search(id):
                                     modified_time=modified_time,
                                     search_id = id)
                 db.session.add(entityClass)
-
 
             for i, verb in enumerate(the_verbs):
                 verbClass = Verb(art_id_hash=art_id_hash,
@@ -290,7 +288,7 @@ def article_search(id):
     #     pass
 
     # print(is_analyzed)
-    return render_template('analysis.html')
+    return redirect(f'/article/sentences/{id}')
 
 with app.app_context():
     db.metadata.create_all(bind=db.engine, tables=[Article.__table__, Entity.__table__, Verb.__table__, Search.__table__])

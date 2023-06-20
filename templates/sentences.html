@@ -22,12 +22,10 @@
                 <p><b>URL:</b> <a href="{{article.source_url}}" target="_blank">Link/URL</a></p>
                 <p><b>Published Time:</b> {{article.published_time}}</p>
                 <p><b>Modified Time:</b> {{article.modified_time}}</p>
-                <p>{{article.id}} - {{article.sentence_id}}: {{article.sentence_contents}}</p>
-                <p>Search_id: {{article.search}}</p>
+                <p>{{article.sentence_id}}: {{article.sentence_contents}}</p>
 
             {% else %}
-                <p>{{article.id}} - {{article.sentence_id}}: {{article.sentence_contents}}</p>
-                <p>Search_id: {{article.search}}</p>
+                <p>{{article.sentence_id}}: {{article.sentence_contents}}</p>
             {% endif %}
         
         {% endfor %}
