@@ -1,7 +1,7 @@
 import datetime
 import spacy
-from AP_article_builder import ap_article_dict_builder, ap_article_full_txt
-from spacy_methods import (
+from srs.AP_article_builder import ap_article_dict_builder, ap_article_full_txt
+from srs.spacy_methods import (
     sentence_generator,
     verb_matcher
 )

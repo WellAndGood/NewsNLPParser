@@ -1,6 +1,6 @@
 import spacy
 from spacy.tokens import Doc
-from AP_article_builder import ap_article_dict_builder, ap_article_full_txt
+from srs.AP_article_builder import ap_article_dict_builder, ap_article_full_txt
 from spacy.matcher import Matcher
 from typing import Dict, List, Union
 
