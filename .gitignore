@@ -170,3 +170,7 @@ migrations
 
 # specific files
 /removed_files
+/cache
+scratchpad.txt
+LLM.txt
+

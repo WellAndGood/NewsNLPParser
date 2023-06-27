@@ -136,8 +136,57 @@ class Search(db.Model):
     searched = db.Column(db.Boolean, default=False)
     analyzed = db.Column(db.Boolean, default=False)
 
+    def __init__(self, url, title, search_datetime, searched, analyzed):
+        self.url = url
+        self.title = title
+        self.search_datetime = search_datetime
+        self.searched = searched
+        self.analyzed = analyzed
+
     def __repr__(self):
         return('<Search %r>' % self.id)
+
+# A class to provide a summary of an article, as well as generate topics, after submitting it to machine learning models
+class Summary(db.Model):
+    __tablename__ = 'ML_ARTICLE_SUMMARIES'
+    id = db.Column(db.Integer, primary_key=True)
+    art_id_hash = db.Column(db.Text, db.ForeignKey('ARTICLES_REFERENCE.art_id_hash'))
+    art_headline = db.Column(db.Text)
+    main_summary = db.Column(db.Text)
+    what_1 = db.Column(db.Text)
+    what_2 = db.Column(db.Text)
+    what_3 = db.Column(db.Text)
+    who_1 = db.Column(db.Text)
+    who_2 = db.Column(db.Text)
+    who_3 = db.Column(db.Text)
+    where_1 = db.Column(db.Text)
+    where_2 = db.Column(db.Text)
+    where_3 = db.Column(db.Text)
+    when_1 = db.Column(db.Text)
+    when_2 = db.Column(db.Text)
+    when_3 = db.Column(db.Text)
+    summary_datetime = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __init__(self, art_id_hash, art_headline, main_summary, what_1, what_2, what_3, 
+                 who_1, who_2, who_3, where_1, where_2, 
+                 where_3, when_1, when_2, when_3):
+        self.art_id_hash = art_id_hash
+        self.art_headline = art_headline
+        self.main_summary = main_summary
+        self.what_1 = what_1
+        self.what_2 = what_2
+        self.what_3 = what_3
+        self.who_1 = who_1
+        self.who_2 = who_2
+        self.who_3 = who_3
+        self.where_1 = where_1
+        self.where_2 = where_2
+        self.where_3 = where_3
+        self.when_1 = when_1
+
+    def __repr__(self):
+        return('<Summary %r>' % self.id)
+
 
 @app.route('/', methods=['POST', 'GET'])
 def index():
@@ -303,7 +352,7 @@ def article_search(id):
     return redirect(f'/article/sentences/{id}')
 
 with app.app_context():
-    db.metadata.create_all(bind=db.engine, tables=[Article.__table__, Entity.__table__, Verb.__table__, Search.__table__])
+    db.metadata.create_all(bind=db.engine, tables=[Article.__table__, Entity.__table__, Verb.__table__, Search.__table__, Summary.__table__])
     db.create_all()
 
 if __name__ == "__main__":
