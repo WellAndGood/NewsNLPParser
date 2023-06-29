@@ -42,18 +42,33 @@ def ap_article_dict_builder(url: str) -> Dict:
     scripts = ap_article.find(
         "script", attrs={"data-rh": "true", "type": "application/ld+json"}
     )
-    json_script = json.loads(scripts.text)
-    author_list = json_script["author"]
+
+    image_url, image_caption, image_attribution = "", "", ""
+
+    if scripts is not None:
+        json_script = json.loads(scripts.text)
+        try:
+            author_list = json_script["author"]
+            try:
+                image_url = json_script["image"]
+            except KeyError:
+                image_url = "" 
+        except:
+            author_list = ""
+    else:
+        json_script = None
+
     article_information["author(s)"] = author_list
 
     # Retrieves image data
     image_data = []
-    try:
-        image_url = json_script["image"]
-    except KeyError:
-        image_url = ""
+    
     image_caption_div = ap_article.find_all("div", attrs={"data-key": "embed-caption"})
-    image_caption = image_caption_div[0].text
+    try:
+        image_caption = image_caption_div[0].text
+    except IndexError:
+        image_caption = ""
+
     try:
         image_attribution = image_caption[-50:].replace(")", "").split("(")[1]
     except IndexError:
@@ -68,7 +83,10 @@ def ap_article_dict_builder(url: str) -> Dict:
     article_content = ap_article.find_all(
         "div", {"class": "Article", "data-key": "article"}
     )
-    inner_para = article_content[0].find_all("p")
+    try:
+        inner_para = article_content[0].find_all("p")
+    except IndexError:
+        inner_para = []
 
     # Loops through the paragraphs to find inner information
     for index, para in enumerate(inner_para):

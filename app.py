@@ -6,9 +6,9 @@ from spacy.tokens import Doc
 import sqlite3
 import spacy
 import re
-from srs.AP_article_builder import ap_article_dict_builder, ap_article_full_txt
-from srs.spacy_methods import sentence_generator, verb_matcher, get_specific_entities, verb_in_sentence
-from srs.db_interaction import hash_string
+from src.AP_article_builder import ap_article_dict_builder, ap_article_full_txt
+from src.spacy_methods import sentence_generator, verb_matcher, get_specific_entities, verb_in_sentence
+from src.db_interaction import hash_string
 import os
 import sys
 
