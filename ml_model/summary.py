@@ -1,21 +1,19 @@
+from app import app, Article, Entity, Verb, Search, Summary
+
 import torch
 # from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from transformers import BartTokenizer, BartForConditionalGeneration
 
+with app.app_context():
+    results = Search.query.all()
+    
 
-# Install required dependencies
 
-# Import necessary classes and functions
 
-# Load the model and tokenizer
 
 model_name = "facebook/bart-large-cnn"
-# tokenizer = AutoTokenizer.from_pretrained(model_name)
-# model = AutoModelForSequenceClassification.from_pretrained(model_name)
-
 tokenizer = BartTokenizer.from_pretrained(model_name)
 model = BartForConditionalGeneration.from_pretrained(model_name)
-
 
 # Process the input
 input_text  = """A Canadian military surveillance aircraft detected underwater noises as a massive operation searched early Wednesday in a remote part of the North Atlantic for a submersible that vanished while taking five people down to the wreck of the Titanic.

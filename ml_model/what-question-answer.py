@@ -17,7 +17,37 @@ tokenizer = AutoTokenizer.from_pretrained(model_name)
 # a) Get predictions
 nlp = pipeline('question-answering', model=model_name, tokenizer=model_name)
 
-article_text = "A Canadian military surveillance aircraft detected underwater noises as a massive operation searched early Wednesday in a remote part of the North Atlantic for a submersible that vanished while taking five people down to the wreck of the Titanic. A statement from the U.S. Coast Guard did not elaborate on what rescuers believed the noises could be, though it offered a glimmer of hope for those lost aboard the Titan. The vessel is estimated to have as little as a day’s worth of oxygen left if it is still functioning. Three search vessels arrived on-scene Wednesday morning, including one that has side-scanning sonar capabilities, the Coast Guard tweeted. The Coast Guard wrote on Twitter that a Canadian military surveillance aircraft had “detected underwater noises in the search area” and that an underwater robot sent to search that area has so far “yielded negative results. Still, authorities pushed on Wednesday to get salvage equipment to the scene in case the sub is found. The Coast Guard statement about detecting sounds underwater came after Rolling Stone reported that search teams heard “banging sounds in the area every 30 minutes. The report was encouraging to some experts because submarine crews unable to communicate with the surface are taught to bang on their submersible’s hull to be detected by sonar. “It sends a message that you’re probably using military techniques to find me and this is how I’m saying it,” said Frank Owen, a submarine search and rescue expert."
+# article_text = "A Canadian military surveillance aircraft detected underwater noises as a massive operation searched early Wednesday in a remote part of the North Atlantic for a submersible that vanished while taking five people down to the wreck of the Titanic. A statement from the U.S. Coast Guard did not elaborate on what rescuers believed the noises could be, though it offered a glimmer of hope for those lost aboard the Titan. The vessel is estimated to have as little as a day’s worth of oxygen left if it is still functioning. Three search vessels arrived on-scene Wednesday morning, including one that has side-scanning sonar capabilities, the Coast Guard tweeted. The Coast Guard wrote on Twitter that a Canadian military surveillance aircraft had “detected underwater noises in the search area” and that an underwater robot sent to search that area has so far “yielded negative results. Still, authorities pushed on Wednesday to get salvage equipment to the scene in case the sub is found. The Coast Guard statement about detecting sounds underwater came after Rolling Stone reported that search teams heard “banging sounds in the area every 30 minutes. The report was encouraging to some experts because submarine crews unable to communicate with the surface are taught to bang on their submersible’s hull to be detected by sonar. “It sends a message that you’re probably using military techniques to find me and this is how I’m saying it,” said Frank Owen, a submarine search and rescue expert."
+
+# Answer 1: underwater noises
+# Answer 2: Titanic
+# Answer 3: Canadian military surveillance aircraft detected underwater noises
+# article_text = "A Canadian military surveillance aircraft detected underwater noises as a massive operation searched early Wednesday in a remote part of the North Atlantic for a submersible that vanished while taking five people down to the wreck of the Titanic."
+
+# Answer 1: glimmer of hope for those lost aboard the Titan
+# Answer 2: noises
+# Answer 3: A statement from the U.S. Coast Guard
+# article_text = "A statement from the U.S. Coast Guard did not elaborate on what rescuers believed the noises could be, though it offered a glimmer of hope for those lost aboard the Titan. "
+
+# Answer 1: oxygen
+# Answer 2: oxygen left if it is still functioning
+# Answer 3: day
+# article_text = "The vessel is estimated to have as little as a day’s worth of oxygen left if it is still functioning."
+
+# Answer 1: search
+# Answer 2: side-scanning sonar capabilities
+# Answer 3: search
+# article_text = "Three search vessels arrived on-scene Wednesday morning, including one that has side-scanning sonar capabilities, the Coast Guard tweeted."
+
+# Answer 1: The Coast Guard
+# Answer 2: a Canadian military surveillance aircraft had “detected underwater noises
+# Answer 3: negative results 
+# article_text = "The Coast Guard wrote on Twitter that a Canadian military surveillance aircraft had “detected underwater noises in the search area” and that an underwater robot sent to search that area has so far “yielded negative results."
+
+# Answer 1: salvage equipment to the scene in case the sub is found
+# Answer 2: authorities
+# Answer 3: authorities pushed on Wednesday
+article_text = "Still, authorities pushed on Wednesday to get salvage equipment to the scene in case the sub is found."
 
 question_text = 'What is the main topic of this article?'
 

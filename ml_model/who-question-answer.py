@@ -17,7 +17,38 @@ nlp = pipeline('question-answering', model=model_name, tokenizer=model_name)
 
 # If I extend the length of the input, the answer biases later input.
 
-article_text = "A Canadian military surveillance aircraft detected underwater noises as a massive operation searched early Wednesday in a remote part of the North Atlantic for a submersible that vanished while taking five people down to the wreck of the Titanic. A statement from the U.S. Coast Guard did not elaborate on what rescuers believed the noises could be, though it offered a glimmer of hope for those lost aboard the Titan. The vessel is estimated to have as little as a day’s worth of oxygen left if it is still functioning. Three search vessels arrived on-scene Wednesday morning, including one that has side-scanning sonar capabilities, the Coast Guard tweeted. The Coast Guard wrote on Twitter that a Canadian military surveillance aircraft had “detected underwater noises in the search area” and that an underwater robot sent to search that area has so far “yielded negative results. Still, authorities pushed on Wednesday to get salvage equipment to the scene in case the sub is found."
+# article_text = "A Canadian military surveillance aircraft detected underwater noises as a massive operation searched early Wednesday in a remote part of the North Atlantic for a submersible that vanished while taking five people down to the wreck of the Titanic. A statement from the U.S. Coast Guard did not elaborate on what rescuers believed the noises could be, though it offered a glimmer of hope for those lost aboard the Titan. The vessel is estimated to have as little as a day’s worth of oxygen left if it is still functioning. Three search vessels arrived on-scene Wednesday morning, including one that has side-scanning sonar capabilities, the Coast Guard tweeted. The Coast Guard wrote on Twitter that a Canadian military surveillance aircraft had “detected underwater noises in the search area” and that an underwater robot sent to search that area has so far “yielded negative results. Still, authorities pushed on Wednesday to get salvage equipment to the scene in case the sub is found."
+
+# Answer 1: the Titanic
+# Answer 2: submersible
+# Answer 3: vanished while taking five people
+# article_text = "A Canadian military surveillance aircraft detected underwater noises as a massive operation searched early Wednesday in a remote part of the North Atlantic for a submersible that vanished while taking five people down to the wreck of the Titanic."
+
+# Answer 1: those lost aboard the Titan
+# Answer 2: U.S. Coast Guard
+# Answer 3: U.S. Coast Guard
+# article_text = "A statement from the U.S. Coast Guard did not elaborate on what rescuers believed the noises could be, though it offered a glimmer of hope for those lost aboard the Titan. "
+
+# Answer 1: The vessel
+# Answer 2: oxygen
+# Answer 3: oxygen left if it is still functioning
+# article_text = "The vessel is estimated to have as little as a day’s worth of oxygen left if it is still functioning."
+
+# Answer 1: search vessels
+# Answer 2: one that has side-scanning sonar capacities
+# Answer 3: Coast Guard
+# article_text = "Three search vessels arrived on-scene Wednesday morning, including one that has side-scanning sonar capabilities, the Coast Guard tweeted."
+
+# Answer 1: The Coast Guard
+# Answer 2: Canadian military surveillance aircraft
+# Answer 3: The Coast Guard wrote on Twitter
+# article_text = "The Coast Guard wrote on Twitter that a Canadian military surveillance aircraft had “detected underwater noises in the search area” and that an underwater robot sent to search that area has so far “yielded negative results."
+
+# Answer 1: Who is the main subject of this article?
+# Answer 2: authorities
+# Answer 3: authorities
+article_text = "Still, authorities pushed on Wednesday to get salvage equipment to the scene in case the sub is found."
+
 
 question_text_1 = 'Who is the main subject of this article?'
 
