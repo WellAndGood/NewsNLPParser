@@ -45,3 +45,9 @@ sentence_list = first_sentences(APurl, 1, 5)
 print(sentence_list)
 
 
+for i, sent in enumerate(sentence_list):
+
+    # 'What' section
+    
+
+
