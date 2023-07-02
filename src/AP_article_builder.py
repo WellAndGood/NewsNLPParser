@@ -39,33 +39,24 @@ def ap_article_dict_builder(url: str) -> Dict:
 
     # Retrieves authors
     author_list = []
-    scripts = ap_article.find(
-        "script", attrs={"data-rh": "true", "type": "application/ld+json"}
-    )
-
-    image_url, image_caption, image_attribution = "", "", ""
-
-    if scripts is not None:
-        json_script = json.loads(scripts.text)
-        try:
-            author_list = json_script["author"]
-            try:
-                image_url = json_script["image"]
-            except KeyError:
-                image_url = "" 
-        except:
-            author_list = ""
-    else:
-        json_script = None
-
+    # Find who wrote the article
+    authorsDiv = ap_article.find('div', class_='Page-authors')
+    authors = authorsDiv.find('span', class_='Link')
+    authors = authors.text
+    author_list = authors
     article_information["author(s)"] = author_list
 
     # Retrieves image data
     image_data = []
-    
-    image_caption_div = ap_article.find_all("div", attrs={"data-key": "embed-caption"})
     try:
-        image_caption = image_caption_div[0].text
+        image_url_div = ap_article.find_all('meta', property='og:image:url')
+        image_url = image_url_div[0].get('content')
+    except IndexError:
+        image_url = ""
+
+    try:
+        image_caption_div = ap_article.find_all('meta', attrs={'name':'twitter:image:alt'})
+        image_caption = image_caption_div[0].get('content')
     except IndexError:
         image_caption = ""
 
@@ -80,9 +71,7 @@ def ap_article_dict_builder(url: str) -> Dict:
     paragraphCount = 0
     article_paragraphs = []
 
-    article_content = ap_article.find_all(
-        "div", {"class": "Article", "data-key": "article"}
-    )
+    article_content = ap_article.find_all('div', class_=  'RichTextStoryBody RichTextBody')
     try:
         inner_para = article_content[0].find_all("p")
     except IndexError:

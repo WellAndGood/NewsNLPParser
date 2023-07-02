@@ -168,21 +168,21 @@ class Summary(db.Model):
     sent_5_topic_1 = db.Column(db.Text)
     sent_5_topic_2 = db.Column(db.Text)
     sent_5_topic_3 = db.Column(db.Text)
-    sent_6_topic_1 = db.Column(db.Text)
-    sent_6_topic_2 = db.Column(db.Text)
-    sent_6_topic_3 = db.Column(db.Text)
-    sent_1_who = db.Column(db.Text)
-    sent_2_who = db.Column(db.Text)
-    sent_3_who = db.Column(db.Text)
-    sent_4_who = db.Column(db.Text)
-    sent_5_who = db.Column(db.Text)
-    sent_6_who = db.Column(db.Text)
+    sent_1_who_1 = db.Column(db.Text)
+    sent_1_who_2 = db.Column(db.Text)
+    sent_2_who_1 = db.Column(db.Text)
+    sent_2_who_2 = db.Column(db.Text)
+    sent_3_who_1 = db.Column(db.Text)
+    sent_3_who_2 = db.Column(db.Text)
+    sent_4_who_1 = db.Column(db.Text)
+    sent_4_who_2 = db.Column(db.Text)
+    sent_5_who_1 = db.Column(db.Text)
+    sent_5_who_2 = db.Column(db.Text)
     sent_1_where = db.Column(db.Text)
     sent_2_where = db.Column(db.Text)
     sent_3_where = db.Column(db.Text)
     sent_4_where = db.Column(db.Text)
     sent_5_where = db.Column(db.Text)
-    sent_6_where = db.Column(db.Text)
     sent_1_when = db.Column(db.Text)
     sent_2_when = db.Column(db.Text)
     sent_3_when = db.Column(db.Text)
@@ -198,14 +198,12 @@ def __init__(
     sent_3_topic_1, sent_3_topic_2, sent_3_topic_3,
     sent_4_topic_1, sent_4_topic_2, sent_4_topic_3,
     sent_5_topic_1, sent_5_topic_2, sent_5_topic_3,
-    sent_6_topic_1, sent_6_topic_2, sent_6_topic_3,
     sent_1_who, sent_2_who, sent_3_who,
-    sent_4_who, sent_5_who, sent_6_who,
+    sent_4_who, sent_5_who, 
     sent_1_where, sent_2_where, sent_3_where,
-    sent_4_where, sent_5_where, sent_6_where,
+    sent_4_where, sent_5_where,
     sent_1_when, sent_2_when, sent_3_when,
-    sent_4_when, sent_5_when, sent_6_when
-):
+    sent_4_when, sent_5_when  ):
     self.art_id_hash = art_id_hash
     self.art_headline = art_headline
     self.main_summary = main_summary
@@ -224,27 +222,26 @@ def __init__(
     self.sent_5_topic_1 = sent_5_topic_1
     self.sent_5_topic_2 = sent_5_topic_2
     self.sent_5_topic_3 = sent_5_topic_3
-    self.sent_6_topic_1 = sent_6_topic_1
-    self.sent_6_topic_2 = sent_6_topic_2
-    self.sent_6_topic_3 = sent_6_topic_3
-    self.sent_1_who = sent_1_who
-    self.sent_2_who = sent_2_who
-    self.sent_3_who = sent_3_who
-    self.sent_4_who = sent_4_who
-    self.sent_5_who = sent_5_who
-    self.sent_6_who = sent_6_who
+    self.sent_1_who_1 = sent_1_who_1
+    self.sent_2_who_1 = sent_2_who_1
+    self.sent_3_who_1 = sent_3_who_1
+    self.sent_4_who_1 = sent_4_who_1
+    self.sent_5_who_1 = sent_5_who_1
+    self.sent_1_who_2 = sent_1_who_2
+    self.sent_2_who_2 = sent_2_who_2
+    self.sent_3_who_2 = sent_3_who_2
+    self.sent_4_who_2 = sent_4_who_2
+    self.sent_5_who_2 = sent_5_who_2
     self.sent_1_where = sent_1_where
     self.sent_2_where = sent_2_where
     self.sent_3_where = sent_3_where
     self.sent_4_where = sent_4_where
     self.sent_5_where = sent_5_where
-    self.sent_6_where = sent_6_where
     self.sent_1_when = sent_1_when
     self.sent_2_when = sent_2_when
     self.sent_3_when = sent_3_when
     self.sent_4_when = sent_4_when
     self.sent_5_when = sent_5_when
-    self.sent_6_when = sent_6_when
 
     def __repr__(self):
         return('<Summary %r>' % self.id)
@@ -260,7 +257,8 @@ def index():
         if re.match(pattern, search_content, re.IGNORECASE):
             
             # Populate Search item
-            new_task = Search(url=search_content, search_datetime=datetime.now())
+            new_task = Search(url=search_content, search_datetime=datetime.now(),             title='not yet titled', searched=True, analyzed=False
+            )
             article_dict = ap_article_dict_builder(search_content)
             new_title = article_dict["headline"]
             is_searched = True
@@ -318,98 +316,104 @@ def view_all_verbs(id):
 @app.route('/article/<int:id>', methods=["GET", "POST"])
 def article_search(id):
     article_to_search = Search.query.get_or_404(id)
-    try:
-        url = article_to_search.url
-        analyzed = article_to_search.analyzed
-        print(analyzed)
-        if url is not None:
-            if analyzed == False:
-                article_dict = ap_article_dict_builder(url)
-                article_txt = ap_article_full_txt(url)
+    # try:
+    url = article_to_search.url
 
-                nlp = spacy.load("en_core_web_md")
+    print(url)
+    analyzed = article_to_search.analyzed
+    print(analyzed)
+    if url is not None:
+        if analyzed == False:
+            article_dict = ap_article_dict_builder(url)
+            print(article_dict)
+            
+            article_txt = ap_article_full_txt(url)
+            print(article_txt)
 
-                # Assign parameters to be placed into DB
-                art_headline = article_dict["headline"]
-                art_id_hash = hash_string(art_headline)
-                list_author = article_dict["author(s)"]
-                art_author = ",".join(list_author)
-                source_url = article_dict["self_URL"]
-                published_time = article_dict["published_time"] 
-                modified_time = article_dict["modified_time"]
+            nlp = spacy.load("en_core_web_md")
 
-                # Initialize the Doc object, generate sentences, verbs, entities, from the article
-                doc = nlp(article_txt)
+            # Assign parameters to be placed into DB
+            art_headline = article_dict["headline"]
+            art_id_hash = hash_string(art_headline)
+            list_author = article_dict["author(s)"]
+            art_author = list_author
+            source_url = article_dict["self_URL"]
+            published_time = article_dict["published_time"] 
+            modified_time = article_dict["modified_time"]
 
-                # Sentences
-                sentences = sentence_generator(doc)
-                
-                # Raw Entities
-                entities = get_specific_entities(sentences)
-                raw_entity_list = list(entities)
-                
-                # Verbs
-                verbs = verb_matcher(doc)
-                the_verbs = verb_in_sentence(verbs, sentences, doc)
+            # Initialize the Doc object, generate sentences, verbs, entities, from the article
+            doc = nlp(article_txt)
 
-                # Populate with Article objects to add to DB
-                for i, sent in enumerate(sentences):
-                    sentenceClass = Article(art_headline = art_headline,
-                            art_id_hash = art_id_hash,
-                            sentence_id = i,
-                            sentence_contents=sent,
-                            authors = art_author,
-                            source_url = source_url,
-                            published_time = published_time,
-                            modified_time = modified_time,
-                            search_id = id )
-                    db.session.add(sentenceClass)
+            # Sentences
+            sentences = sentence_generator(doc)
+            print(sentences)
+            
+            # Raw Entities
+            entities = get_specific_entities(sentences)
+            raw_entity_list = list(entities)
+            
+            # Verbs
+            verbs = verb_matcher(doc)
+            the_verbs = verb_in_sentence(verbs, sentences, doc)
 
-                # Populate with Entity objects to add to DB
-                for i, entity in enumerate(raw_entity_list):
-                    entityClass = Entity(art_id_hash=art_id_hash,
-                                        art_headline=art_headline,
-                                        entity_text=entity[0],
-                                        entity_type=entity[1],
-                                        word_index_start=entity[2],
-                                        word_index_end=entity[3],
-                                        sentence_id = i,
-                                        timestamp=datetime.now(),
-                                        modified_time=modified_time,
-                                        search_id = id)
-                    db.session.add(entityClass)
+            # Populate with Article objects to add to DB
+            for i, sent in enumerate(sentences):
+                sentenceClass = Article(art_headline = art_headline,
+                        art_id_hash = art_id_hash,
+                        sentence_id = i,
+                        sentence_contents=sent,
+                        authors = art_author,
+                        source_url = source_url,
+                        published_time = published_time,
+                        modified_time = modified_time,
+                        search_id = id )
+                db.session.add(sentenceClass)
 
-                # Populate with Verb objects to add to DB
-                for i, verb in enumerate(the_verbs):
-                    verbClass = Verb(art_id_hash=art_id_hash,
-                                        art_headline=art_headline,
-                                        verb_text = verb[0],
-                                        lemmatized_text = verb[1],
-                                        article_word_index = verb[2],
-                                        sentence_id = verb[4],
-                                        sent_word_index = verb[5],
-                                        timestamp=datetime.now(),
-                                        modified_time=modified_time,
-                                        search_id = id )
-                    db.session.add(verbClass)
+            # Populate with Entity objects to add to DB
+            for i, entity in enumerate(raw_entity_list):
+                entityClass = Entity(art_id_hash=art_id_hash,
+                                    art_headline=art_headline,
+                                    entity_text=entity[0],
+                                    entity_type=entity[1],
+                                    word_index_start=entity[2],
+                                    word_index_end=entity[3],
+                                    sentence_id = i,
+                                    timestamp=datetime.now(),
+                                    modified_time=modified_time,
+                                    search_id = id)
+                db.session.add(entityClass)
 
-                # Search db associates this Search as being analyzed
-                is_analyzed = True
-                article_to_search.analyzed = is_analyzed
+            # Populate with Verb objects to add to DB
+            for i, verb in enumerate(the_verbs):
+                verbClass = Verb(art_id_hash=art_id_hash,
+                                    art_headline=art_headline,
+                                    verb_text = verb[0],
+                                    lemmatized_text = verb[1],
+                                    article_word_index = verb[2],
+                                    sentence_id = verb[4],
+                                    sent_word_index = verb[5],
+                                    timestamp=datetime.now(),
+                                    modified_time=modified_time,
+                                    search_id = id )
+                db.session.add(verbClass)
 
-                # Database has grabbed Search, Verb, Entity, and Article, and commits
-                db.session.add(article_to_search)
-                db.session.commit()
+            # Search db associates this Search as being analyzed
+            is_analyzed = True
+            article_to_search.analyzed = is_analyzed
 
-            elif analyzed == True:
-                print("already analyzed")
-            else:
-                article_to_search.analyzed = False
-                db.session.add(article_to_search)
-                db.session.commit()
-                return redirect('/')        
-    except:
-        pass
+            # Database has grabbed Search, Verb, Entity, and Article, and commits
+            db.session.add(article_to_search)
+            db.session.commit()
+
+        elif analyzed == True:
+            print("already analyzed")
+        else:
+            article_to_search.analyzed = False
+            db.session.add(article_to_search)
+            db.session.commit()
+            return redirect('/')        
+    # except:
+    #     pass
 
     return redirect(f'/article/sentences/{id}')
 

@@ -52,7 +52,7 @@ art_id_hash = hash_string(art_headline)
 
 # Author
 list_author = article_dict["author(s)"]
-art_author = ",".join(list_author)
+art_author = list_author
 
 # Source (URL)
 source_url = article_dict["self_URL"]
