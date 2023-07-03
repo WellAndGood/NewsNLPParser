@@ -2,6 +2,8 @@ from app import app, Article, Entity, Verb, Search, Summary
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from datetime import datetime
+import torch
+from transformers import AutoModelForQuestionAnswering, AutoTokenizer, pipeline
 
 roberta_dict = {
     "what_1": "What is the main topic of this article?",
@@ -10,9 +12,6 @@ roberta_dict = {
     "when_1": "When does this sentence take place?",
     "who_1": "Who is the main subject of this article?",
     "who_2": "Besides '{provided_answer_1}', who is the main character of this article?",
-}
-
-mililm_dict = {
     "where_1": "When does this sentence take place?"
 }
 
@@ -28,7 +27,7 @@ def search_match(url, results):
         if result.url == url:
             return result
 
-APurl = "https://apnews.com/article/new-york-gnats-404a0e7e699a6619c29c8a43462cdcd0"
+APurl = "https://apnews.com/article/moms-for-liberty-trump-desantis-2024-republicans-8e17f7587bba9cf6dd316c3ef2eb6a19"
 result_match = search_match(APurl, results_list)
 
 def first_sentences(url, low_range, upp_range):
@@ -41,13 +40,186 @@ def first_sentences(url, low_range, upp_range):
 
 # print(result_match)
 
-sentence_list = first_sentences(APurl, 1, 5)
+sentence_list = first_sentences(APurl, 0, 5)
 print(sentence_list)
 
 
 for i, sent in enumerate(sentence_list):
 
+    response_dict = {
+        "what_1": "",
+        "what_2": "",
+        "what_3": "",
+        "when_1": "",
+        "who_1": "",
+        "who_2": "",
+        "where_1": ""
+    }
+
     # 'What' section
+
+    # Roberta Base Squad - For 'what', 'when', and 'who' questions
+    model_name = "deepset/roberta-base-squad2"
+    model = AutoModelForQuestionAnswering.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+    nlp = pipeline('question-answering', model=model_name, tokenizer=model_name)
+
+    # What - Question 1
+    article_text = sent
+    question_text = roberta_dict["what_1"]
+    QA_input = {
+        'question': question_text,
+        'context': article_text
+    }
+    response = nlp(QA_input)
+    inputs = tokenizer(QA_input['question'], QA_input['context'], return_tensors="pt")
+    outputs = model(**inputs)
+
+    # Interpret the output
+    start_logits = outputs.start_logits
+    end_logits = outputs.end_logits
+    start_index = torch.argmax(start_logits)
+    end_index = torch.argmax(end_logits) + 1
+    answer = tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(inputs['input_ids'][0][start_index:end_index]))
+    provided_answer_1 = response["answer"]
+
+    # What - Question 2
+    question_text = roberta_dict["what_2"].format(provided_answer_1 = provided_answer_1)
+    QA_input = {
+        'question': question_text,
+        'context': article_text
+    }
+    response = nlp(QA_input)
+    inputs = tokenizer(QA_input['question'], QA_input['context'], return_tensors="pt")
+    outputs = model(**inputs)
+
+    # Interpret the output
+    start_logits = outputs.start_logits
+    end_logits = outputs.end_logits
+    start_index = torch.argmax(start_logits)
+    end_index = torch.argmax(end_logits) + 1
+    answer = tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(inputs['input_ids'][0][start_index:end_index]))
+    provided_answer_2 = response["answer"]
+
+    # 'Who'- Question 3
+    question_text = roberta_dict["what_3"].format(provided_answer_1 = provided_answer_1, provided_answer_2 = provided_answer_2)
+    QA_input = {
+        'question': question_text,
+        'context': article_text
+    }
+    response = nlp(QA_input)
+    inputs = tokenizer(QA_input['question'], QA_input['context'], return_tensors="pt")
+    outputs = model(**inputs)
+
+    # Interpret the output
+    start_logits = outputs.start_logits
+    end_logits = outputs.end_logits
+    start_index = torch.argmax(start_logits)
+    end_index = torch.argmax(end_logits) + 1
+    answer = tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(inputs['input_ids'][0][start_index:end_index]))
+    provided_answer_3 = response["answer"]
+
+    # Update response_dict values
+    response_dict["what_1"] = provided_answer_1
+    if len(provided_answer_2) > 0 and provided_answer_2 != provided_answer_1:
+        response_dict["what_2"] = provided_answer_2
+
+    if len(provided_answer_3) > 0 and provided_answer_3 != provided_answer_1 and provided_answer_3 != provided_answer_2:
+        response_dict["what_3"] = provided_answer_3
+
+    # 'When' section
+
+    question_text = roberta_dict["when_1"]
+    when_input_1 = {
+        'question': question_text,
+        'context': sent
+    }
+    response = nlp(when_input_1)
+    # Process the input
+    inputs_1 = tokenizer(when_input_1['question'], when_input_1['context'], return_tensors="pt")
+    # Feed the input to the model
+    outputs = model(**inputs_1)
+
+    # Interpret the output
+    start_logits = outputs.start_logits
+    end_logits = outputs.end_logits
+    start_index = torch.argmax(start_logits)
+    end_index = torch.argmax(end_logits) + 1
+    answer = tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(inputs_1['input_ids'][0][start_index:end_index]))
+    provided_answer = response["answer"]
+    print("Answer 1:", provided_answer)
+    response_dict["when_1"] = provided_answer
     
+    # 'Who' - Question 1
+    question_text = sent
+    roberta_dict["who_1"]
+
+    who_input_1 = {
+        'question': question_text,
+        'context': sent
+    }
+
+    response = nlp(who_input_1)
+    inputs = tokenizer(who_input_1['question'], who_input_1['context'], return_tensors="pt")
+    outputs = model(**inputs)
+
+    # Interpret the output
+    start_logits = outputs.start_logits
+    end_logits = outputs.end_logits
+    start_index = torch.argmax(start_logits)
+    end_index = torch.argmax(end_logits) + 1
+    answer = tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(inputs_1['input_ids'][0][start_index:end_index]))
+    provided_answer_1 = response["answer"]
+    response_dict["who_1"] = provided_answer_1
+
+    # Who - Question 2
+    question_text = roberta_dict["who_2"].format(provided_answer_1 = provided_answer_1)
+    who_input_2 = {
+        'question': question_text,
+        'context': sent
+    }
+    response = nlp(QA_input)
+    inputs = tokenizer(who_input_2['question'], who_input_2['context'], return_tensors="pt")
+    outputs = model(**inputs)
+    
+    start_logits = outputs.start_logits
+    end_logits = outputs.end_logits
+    start_index = torch.argmax(start_logits)
+    end_index = torch.argmax(end_logits) + 1
+    answer = tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(inputs_1['input_ids'][0][start_index:end_index]))
+    provided_answer_1 = response["answer"]
+    response_dict["who_2"] = provided_answer_1
+
+    # 'Where' section - MINILM
+    # Load the model and tokenizer
+    where_model_name = "deepset/minilm-uncased-squad2"
+    model = AutoModelForQuestionAnswering.from_pretrained(where_model_name)
+    tokenizer = AutoTokenizer.from_pretrained(where_model_name)
+
+    where_nlp = pipeline('question-answering', model=where_model_name, tokenizer=where_model_name)
+
+    # Where - Question 1
+    article_text = sent
+    question_text = roberta_dict["where_1"]
+    QA_input = {
+        'question': question_text,
+        'context': sent
+    }
+    response = nlp(QA_input)
+    inputs = tokenizer(QA_input['question'], QA_input['context'], return_tensors="pt")
+    outputs = model(**inputs)
+
+    # Interpret the output
+    start_logits = outputs.start_logits
+    end_logits = outputs.end_logits
+    start_index = torch.argmax(start_logits)
+    end_index = torch.argmax(end_logits) + 1
+    answer = tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(inputs['input_ids'][0][start_index:end_index]))
+    provided_answer_1 = response["answer"]
+
+    response_dict["where_1"] = provided_answer_1
+
+    print(response_dict)
 
 

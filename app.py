@@ -152,7 +152,9 @@ class Summary(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     art_id_hash = db.Column(db.Text, db.ForeignKey('ARTICLES_REFERENCE.art_id_hash'))
     art_headline = db.Column(db.Text)
+    sentence_id = db.Column(db.Integer)
     main_summary = db.Column(db.Text)
+    source_url = db.Column(db.Text)
     sent_1_topic_1 = db.Column(db.Text)
     sent_1_topic_2 = db.Column(db.Text)
     sent_1_topic_3 = db.Column(db.Text)
@@ -192,7 +194,7 @@ class Summary(db.Model):
     summary_datetime = db.Column(db.DateTime, default=datetime.utcnow)
 
 def __init__(
-    self, art_id_hash, art_headline, main_summary,
+    self, art_id_hash, art_headline, main_summary, sentence_id, source_url,
     sent_1_topic_1, sent_1_topic_2, sent_1_topic_3,
     sent_2_topic_1, sent_2_topic_2, sent_2_topic_3,
     sent_3_topic_1, sent_3_topic_2, sent_3_topic_3,
@@ -207,6 +209,8 @@ def __init__(
     self.art_id_hash = art_id_hash
     self.art_headline = art_headline
     self.main_summary = main_summary
+    self.sentence_id = sentence_id
+    self.source_url = source_url
     self.sent_1_topic_1 = sent_1_topic_1
     self.sent_1_topic_2 = sent_1_topic_2
     self.sent_1_topic_3 = sent_1_topic_3
