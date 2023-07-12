@@ -1,9 +1,16 @@
 from app import app, Article, Entity, Verb, Search, Summary
+import os
+from flask import Flask, render_template, url_for, request, redirect, flash, current_app
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from datetime import datetime
+from src.AP_article_builder import ap_article_dict_builder, ap_article_full_txt
+from src.db_interaction import hash_string
 import torch
 from transformers import AutoModelForQuestionAnswering, AutoTokenizer, pipeline
+from flask import Blueprint
+
+
 
 roberta_dict = {
     "what_1": "What is the main topic of this article?",
@@ -27,8 +34,15 @@ def search_match(url, results):
         if result.url == url:
             return result
 
-APurl = "https://apnews.com/article/moms-for-liberty-trump-desantis-2024-republicans-8e17f7587bba9cf6dd316c3ef2eb6a19"
+with app.app_context:
+    db = SQLAlchemy(app)
+
+APurl = "https://apnews.com/article/philadelphia-shooting-victims-8de8da4e5e3cb5d9252233372c250ba8"
 result_match = search_match(APurl, results_list)
+article_dict = ap_article_dict_builder(APurl)
+art_headline = article_dict["headline"]
+source_url = article_dict["self_URL"]
+art_id_hash = hash_string(art_headline)
 
 def first_sentences(url, low_range, upp_range):
     sentence_list = []
@@ -222,4 +236,28 @@ for i, sent in enumerate(sentence_list):
 
     print(response_dict)
 
+    summaryClass = Summary(art_id_hash=art_id_hash,
+                           art_headline = art_headline,
+                           sentence_id = i,
+                           source_url = source_url,
+                            sent_what_1 = response_dict["what_1"],
+                            sent_what_2 = response_dict["what_2"],
+                            sent_what_3 = response_dict["what_3"],
+                            sent_who_1 = response_dict["who_1"],
+                            sent_who_2 = response_dict["who_2"],
+                            sent_when = response_dict["when_1"],
+                            sent_where = response_dict["where_1"],
+                            summary_datetime = datetime.now()
+                           )
+    db.session.add(summaryClass)
 
+db.session.commit()
+
+
+
+def db_insert(func):
+    def wrapper(*args, **kwargs):
+        with current_app.app_context():
+            return func(*args, **kwargs)
+    return wrapper
+#           

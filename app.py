@@ -1,4 +1,4 @@
-from flask import Flask, render_template, url_for, request, redirect, flash
+from flask import Flask, render_template, url_for, request, redirect, flash, Blueprint
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from datetime import datetime
@@ -18,13 +18,21 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 # Add the directory to the Python path
 sys.path.append(current_dir)
 
-# Flask app setup
-app_dir = os.path.dirname(os.path.abspath(__file__))
-os.makedirs(os.path.join(app_dir, "db"), exist_ok=True)
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///" + os.path.join(app_dir, "db", "NLPdatabase.db")
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
+def create_app():
+    # Flask app setup
+    app_dir = os.path.dirname(os.path.abspath(__file__))
+    os.makedirs(os.path.join(app_dir, "db"), exist_ok=True)
+    app = Flask(__name__)
+    app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///" + os.path.join(app_dir, "db", "NLPdatabase.db")
+    db = SQLAlchemy(app)
+    migrate = Migrate(app, db)
+
+    summaryBP = Blueprint('summary', __name__)
+    app.register_blueprint(summaryBP)
+
+    return app, migrate, db
+
+app, migrate, db = create_app()
 
 # Define Article_Reference's columns and properties here
 class Article(db.Model):
@@ -155,97 +163,31 @@ class Summary(db.Model):
     sentence_id = db.Column(db.Integer)
     main_summary = db.Column(db.Text)
     source_url = db.Column(db.Text)
-    sent_1_topic_1 = db.Column(db.Text)
-    sent_1_topic_2 = db.Column(db.Text)
-    sent_1_topic_3 = db.Column(db.Text)
-    sent_2_topic_1 = db.Column(db.Text)
-    sent_2_topic_2 = db.Column(db.Text)
-    sent_2_topic_3 = db.Column(db.Text)
-    sent_3_topic_1 = db.Column(db.Text)
-    sent_3_topic_2 = db.Column(db.Text)
-    sent_3_topic_3 = db.Column(db.Text)
-    sent_4_topic_1 = db.Column(db.Text)
-    sent_4_topic_2 = db.Column(db.Text)
-    sent_4_topic_3 = db.Column(db.Text)
-    sent_5_topic_1 = db.Column(db.Text)
-    sent_5_topic_2 = db.Column(db.Text)
-    sent_5_topic_3 = db.Column(db.Text)
-    sent_1_who_1 = db.Column(db.Text)
-    sent_1_who_2 = db.Column(db.Text)
-    sent_2_who_1 = db.Column(db.Text)
-    sent_2_who_2 = db.Column(db.Text)
-    sent_3_who_1 = db.Column(db.Text)
-    sent_3_who_2 = db.Column(db.Text)
-    sent_4_who_1 = db.Column(db.Text)
-    sent_4_who_2 = db.Column(db.Text)
-    sent_5_who_1 = db.Column(db.Text)
-    sent_5_who_2 = db.Column(db.Text)
-    sent_1_where = db.Column(db.Text)
-    sent_2_where = db.Column(db.Text)
-    sent_3_where = db.Column(db.Text)
-    sent_4_where = db.Column(db.Text)
-    sent_5_where = db.Column(db.Text)
-    sent_1_when = db.Column(db.Text)
-    sent_2_when = db.Column(db.Text)
-    sent_3_when = db.Column(db.Text)
-    sent_4_when = db.Column(db.Text)
-    sent_5_when = db.Column(db.Text)
-    sent_6_when = db.Column(db.Text)
+    sent_what_1 = db.Column(db.Text)
+    sent_what_2 = db.Column(db.Text)
+    sent_what_3 = db.Column(db.Text)
+    sent_who_1 = db.Column(db.Text)
+    sent_who_2 = db.Column(db.Text)
+    sent_where = db.Column(db.Text)
+    sent_when = db.Column(db.Text)
     summary_datetime = db.Column(db.DateTime, default=datetime.utcnow)
 
-def __init__(
-    self, art_id_hash, art_headline, main_summary, sentence_id, source_url,
-    sent_1_topic_1, sent_1_topic_2, sent_1_topic_3,
-    sent_2_topic_1, sent_2_topic_2, sent_2_topic_3,
-    sent_3_topic_1, sent_3_topic_2, sent_3_topic_3,
-    sent_4_topic_1, sent_4_topic_2, sent_4_topic_3,
-    sent_5_topic_1, sent_5_topic_2, sent_5_topic_3,
-    sent_1_who, sent_2_who, sent_3_who,
-    sent_4_who, sent_5_who, 
-    sent_1_where, sent_2_where, sent_3_where,
-    sent_4_where, sent_5_where,
-    sent_1_when, sent_2_when, sent_3_when,
-    sent_4_when, sent_5_when  ):
+def __init__(self, art_id_hash, art_headline, main_summary, sentence_id, source_url,
+    sent_what_1, sent_what_2, sent_what_3,
+    sent_who_1, sent_who_2, 
+    sent_where, sent_when):
     self.art_id_hash = art_id_hash
     self.art_headline = art_headline
     self.main_summary = main_summary
     self.sentence_id = sentence_id
     self.source_url = source_url
-    self.sent_1_topic_1 = sent_1_topic_1
-    self.sent_1_topic_2 = sent_1_topic_2
-    self.sent_1_topic_3 = sent_1_topic_3
-    self.sent_2_topic_1 = sent_2_topic_1
-    self.sent_2_topic_2 = sent_2_topic_2
-    self.sent_2_topic_3 = sent_2_topic_3
-    self.sent_3_topic_1 = sent_3_topic_1
-    self.sent_3_topic_2 = sent_3_topic_2
-    self.sent_3_topic_3 = sent_3_topic_3
-    self.sent_4_topic_1 = sent_4_topic_1
-    self.sent_4_topic_2 = sent_4_topic_2
-    self.sent_4_topic_3 = sent_4_topic_3
-    self.sent_5_topic_1 = sent_5_topic_1
-    self.sent_5_topic_2 = sent_5_topic_2
-    self.sent_5_topic_3 = sent_5_topic_3
-    self.sent_1_who_1 = sent_1_who_1
-    self.sent_2_who_1 = sent_2_who_1
-    self.sent_3_who_1 = sent_3_who_1
-    self.sent_4_who_1 = sent_4_who_1
-    self.sent_5_who_1 = sent_5_who_1
-    self.sent_1_who_2 = sent_1_who_2
-    self.sent_2_who_2 = sent_2_who_2
-    self.sent_3_who_2 = sent_3_who_2
-    self.sent_4_who_2 = sent_4_who_2
-    self.sent_5_who_2 = sent_5_who_2
-    self.sent_1_where = sent_1_where
-    self.sent_2_where = sent_2_where
-    self.sent_3_where = sent_3_where
-    self.sent_4_where = sent_4_where
-    self.sent_5_where = sent_5_where
-    self.sent_1_when = sent_1_when
-    self.sent_2_when = sent_2_when
-    self.sent_3_when = sent_3_when
-    self.sent_4_when = sent_4_when
-    self.sent_5_when = sent_5_when
+    self.sent_what_1 = sent_what_1
+    self.sent_what_2 = sent_what_2
+    self.sent_what_3 = sent_what_3
+    self.sent_who_1 = sent_who_1
+    self.sent_who_2 = sent_who_2
+    self.sent_where = sent_where
+    self.sent_when = sent_when
 
     def __repr__(self):
         return('<Summary %r>' % self.id)
