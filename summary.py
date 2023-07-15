@@ -10,7 +10,14 @@ import torch
 from transformers import AutoModelForQuestionAnswering, AutoTokenizer, pipeline
 from flask import Blueprint
 
+# summaryBP = Blueprint('summary', __name__, static_folder='static', template_folder='template')
+# app.register_blueprint(summaryBP, url_prefix="/summary")
 
+# @summaryBP.route("/")
+# def analyse():
+
+for name, blueprint in app.blueprints.items():
+    print(f"Blueprint name: {name}")
 
 roberta_dict = {
     "what_1": "What is the main topic of this article?",
@@ -237,9 +244,9 @@ for i, sent in enumerate(sentence_list):
     print(response_dict)
 
     summaryClass = Summary(art_id_hash=art_id_hash,
-                           art_headline = art_headline,
-                           sentence_id = i,
-                           source_url = source_url,
+                        art_headline = art_headline,
+                        sentence_id = i,
+                        source_url = source_url,
                             sent_what_1 = response_dict["what_1"],
                             sent_what_2 = response_dict["what_2"],
                             sent_what_3 = response_dict["what_3"],
@@ -248,7 +255,7 @@ for i, sent in enumerate(sentence_list):
                             sent_when = response_dict["when_1"],
                             sent_where = response_dict["where_1"],
                             summary_datetime = datetime.now()
-                           )
+                        )
     db.session.add(summaryClass)
 
 db.session.commit()
