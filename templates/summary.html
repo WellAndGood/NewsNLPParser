@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block head %}
+
+{% endblock %}
+
+{% block body %}
+
+    <div class="content">
+        <a href="/">Return to main page</a>
+    </div>
+
+    {% if summary|length < 1 %}
+        <h4 style="text-align: center">There is no saved summary.</h4>
+    {% else %}
+        <h2>{{ summary[0].art_headline }}</h2>
+
+        <h3>These are AI-generated summaries of the first sentences of this article.</h3>
+        <h4>Using Question-Answering models, we are able to (sometimes) determine the where, what, when, and who of each sentence.</h4>
+        <p><b>Author:</b>{{articles[0].authors}}</p>
+        <p><b>URL:</b> <a href="{{summary.source_url}}" target="_blank">Link/URL</a></p>
+        <p><b>Published Time:</b> {{articles[0].published_time}}</p>
+        <p><b>Modified Time:</b> {{articles[0].modified_time}}</p>
+        <p><b>Summary Gathered:</b> {{summary[0].summary_datetime}}</p>
+
+        <table> 
+
+            <tr>
+                <th>Sentence No.</th>
+                <th>Contents</th>
+            </tr>
+
+        {% for summ in summary %}
+
+            
+            <tr>
+                <th>{{summ.sentence_id + 1}}</th>
+                <th>{{summ.main_summary}}</th>
+            </tr>
+
+        {% endfor %}
+
+        </table>
+        <table>
+            <tr>
+                <th>Sentence No.</th>
+                <th>Topic 1</th>
+                <th>Topic 2</th>
+                <th>Topic 3</th>
+                <th>When</th>
+                <th>What (1)</th>
+                <th>What (2)</th>    
+                <th>Where</th>
+            </tr>
+
+
+        {% for summ in summary %}
+
+            <tr>
+                <th>{{summ.sentence_id + 1}}</th>
+                <th>{{summ.sent_what_1}}</th>
+                <th>{{summ.sent_what_2}}</th>
+                <th>{{summ.sent_what_3}}</th>
+                <th>{{summ.sent_who_1 }}</th>  
+                <th>{{summ.sent_who_2}}</th>
+                <th>{{summ.sent_when}}</th>
+                <th>{{summ.sent_where}}</th>
+            </tr>
+
+        {% endfor %}
+
+    {% endif %}
+
+{% endblock %}

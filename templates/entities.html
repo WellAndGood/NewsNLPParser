@@ -17,19 +17,17 @@
         <table>
             <tr>
                 <th>Entity</th>
+                <th>Sentence ID</th>
                 <th>Word Start</th>
                 <th>Word End</th>    
-                <th>Sentence ID</th>
-                <th>Search ID</th>  
             </tr>
             
             {% for entity in entities %}
             <tr>
                 <td>{{entity.entity_text}}</td>
+                <td>{{entity.sentence_id }}</td>
                 <td>{{entity.word_index_start}}</td>
                 <td>{{entity.word_index_end}}</td>
-                <td>{{entity.sentence_id }}</td>
-                <td>{{entity.search_id }}</td>
             </tr>
             {% endfor %}
     

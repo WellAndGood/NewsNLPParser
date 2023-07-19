@@ -31,7 +31,8 @@
             <th>Title</th>
             <th>URL</th>
             <th>Date</th>
-            <th>Analysis</th>
+            <th>Breakdown</th>
+            <th>AI Summary</th>
             <th>Actions</th>
         </tr>
         {% for search in searches %}
@@ -46,6 +47,13 @@
                     <a href="/article/verbs/{{search.id}}">Verbs</a>
                 {% else %}
                     <a href="/article/{{search.id}}">Analyse</a>
+                {% endif %}
+            </td>
+            <td>
+                {% if search.analyzed %}
+                    <a href="/article/summary/{{search.id}}">Summary</a>
+                {% else %}
+                    <p></p>
                 {% endif %}
             </td>
             <td>

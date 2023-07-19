@@ -6,9 +6,11 @@ from spacy.tokens import Doc
 import sqlite3
 import spacy
 import re
+import torch
 from src.AP_article_builder import ap_article_dict_builder, ap_article_full_txt
 from src.spacy_methods import sentence_generator, verb_matcher, get_specific_entities, verb_in_sentence
 from src.db_interaction import hash_string
+from transformers import AutoModelForQuestionAnswering, AutoTokenizer, pipeline
 import os
 import sys
 
@@ -27,12 +29,12 @@ def create_app():
     db = SQLAlchemy(app)
     migrate = Migrate(app, db)
 
-    summaryBP = Blueprint('summary', __name__)
-    app.register_blueprint(summaryBP)
-
     return app, migrate, db
 
 app, migrate, db = create_app()
+
+for name, blueprint in app.blueprints.items():
+    print(f"Blueprint name: {name}")
 
 # Define Article_Reference's columns and properties here
 class Article(db.Model):
@@ -171,11 +173,12 @@ class Summary(db.Model):
     sent_where = db.Column(db.Text)
     sent_when = db.Column(db.Text)
     summary_datetime = db.Column(db.DateTime, default=datetime.utcnow)
+    search_id = db.Column(db.Integer, nullable=True)
 
 def __init__(self, art_id_hash, art_headline, main_summary, sentence_id, source_url,
     sent_what_1, sent_what_2, sent_what_3,
     sent_who_1, sent_who_2, 
-    sent_where, sent_when):
+    sent_where, sent_when, search_id):
     self.art_id_hash = art_id_hash
     self.art_headline = art_headline
     self.main_summary = main_summary
@@ -188,6 +191,7 @@ def __init__(self, art_id_hash, art_headline, main_summary, sentence_id, source_
     self.sent_who_2 = sent_who_2
     self.sent_where = sent_where
     self.sent_when = sent_when
+    self.search_id = search_id
 
     def __repr__(self):
         return('<Summary %r>' % self.id)
@@ -234,6 +238,9 @@ def search_delete(id):
         # Delete the associated verbs
         Verb.query.filter_by(search_id=id).delete()
 
+        # Delete the associated verbs
+        Summary.query.filter_by(search_id=id).delete()
+
         db.session.delete(search_to_delete)
         db.session.commit()
         return redirect('/')
@@ -258,6 +265,14 @@ def view_all_verbs(id):
     verbs = Verb.query.filter_by(search_id=id).all()
     return render_template('verbs.html', verbs=verbs)
 
+@app.route('/article/summary/<int:id>')
+def view_summary(id):
+    summary = Summary.query.filter_by(search_id=id).all()
+    articles = Article.query.filter_by(search_id=id).all()
+    
+    return render_template('summary.html', summary=summary, articles=articles)
+
+
 # To analyze the contents of an article's URL, store them to DBs
 @app.route('/article/<int:id>', methods=["GET", "POST"])
 def article_search(id):
@@ -269,12 +284,12 @@ def article_search(id):
     analyzed = article_to_search.analyzed
     print(analyzed)
     if url is not None:
-        if analyzed == False:
+        if analyzed == False or analyzed == True:
             article_dict = ap_article_dict_builder(url)
-            print(article_dict)
+            # print(article_dict)
             
             article_txt = ap_article_full_txt(url)
-            print(article_txt)
+            # print(article_txt)
 
             nlp = spacy.load("en_core_web_md")
 
@@ -292,64 +307,303 @@ def article_search(id):
 
             # Sentences
             sentences = sentence_generator(doc)
-            print(sentences)
+            # print(sentences)
             
             # Raw Entities
             entities = get_specific_entities(sentences)
+
             raw_entity_list = list(entities)
             
             # Verbs
             verbs = verb_matcher(doc)
             the_verbs = verb_in_sentence(verbs, sentences, doc)
 
-            # Populate with Article objects to add to DB
-            for i, sent in enumerate(sentences):
-                sentenceClass = Article(art_headline = art_headline,
-                        art_id_hash = art_id_hash,
-                        sentence_id = i,
-                        sentence_contents=sent,
-                        authors = art_author,
-                        source_url = source_url,
-                        published_time = published_time,
-                        modified_time = modified_time,
-                        search_id = id )
-                db.session.add(sentenceClass)
+            if analyzed == False:
+                # Populate with Article objects to add to DB
+                for i, sent in enumerate(sentences):
+                    sentenceClass = Article(art_headline = art_headline,
+                            art_id_hash = art_id_hash,
+                            sentence_id = i,
+                            sentence_contents=sent,
+                            authors = art_author,
+                            source_url = source_url,
+                            published_time = published_time,
+                            modified_time = modified_time,
+                            search_id = id )
+                    db.session.add(sentenceClass)
 
-            # Populate with Entity objects to add to DB
-            for i, entity in enumerate(raw_entity_list):
-                entityClass = Entity(art_id_hash=art_id_hash,
-                                    art_headline=art_headline,
-                                    entity_text=entity[0],
-                                    entity_type=entity[1],
-                                    word_index_start=entity[2],
-                                    word_index_end=entity[3],
-                                    sentence_id = i,
-                                    timestamp=datetime.now(),
-                                    modified_time=modified_time,
-                                    search_id = id)
-                db.session.add(entityClass)
+                # Populate with Entity objects to add to DB
+                for i, entity in enumerate(raw_entity_list):
+                    print(entity[5])
+                    entityClass = Entity(art_id_hash=art_id_hash,
+                                        art_headline=art_headline,
+                                        entity_text=entity[0],
+                                        entity_type=entity[1],
+                                        word_index_start=entity[2],
+                                        word_index_end=entity[3],
+                                        sentence_id = entity[5],
+                                        timestamp=datetime.now(),
+                                        modified_time=modified_time,
+                                        search_id = id)
+                    db.session.add(entityClass)
 
-            # Populate with Verb objects to add to DB
-            for i, verb in enumerate(the_verbs):
-                verbClass = Verb(art_id_hash=art_id_hash,
-                                    art_headline=art_headline,
-                                    verb_text = verb[0],
-                                    lemmatized_text = verb[1],
-                                    article_word_index = verb[2],
-                                    sentence_id = verb[4],
-                                    sent_word_index = verb[5],
-                                    timestamp=datetime.now(),
-                                    modified_time=modified_time,
-                                    search_id = id )
-                db.session.add(verbClass)
+                # Populate with Verb objects to add to DB
+                for i, verb in enumerate(the_verbs):
+                    verbClass = Verb(art_id_hash=art_id_hash,
+                                        art_headline=art_headline,
+                                        verb_text = verb[0],
+                                        lemmatized_text = verb[1],
+                                        article_word_index = verb[2],
+                                        sentence_id = verb[4],
+                                        sent_word_index = verb[5],
+                                        timestamp=datetime.now(),
+                                        modified_time=modified_time,
+                                        search_id = id )
+                    db.session.add(verbClass)
 
-            # Search db associates this Search as being analyzed
+            # # Search db associates this Search as being analyzed
             is_analyzed = True
             article_to_search.analyzed = is_analyzed
 
-            # Database has grabbed Search, Verb, Entity, and Article, and commits
+            # # Database has grabbed Search, Verb, Entity, and Article, and commits
             db.session.add(article_to_search)
             db.session.commit()
+
+            roberta_dict = {
+                "what_1": "What is the main topic of this article?",
+                "what_2": "What are the main topics in this article besides {provided_answer_1}?",
+                "what_3": "What are the main topics in this article besides {provided_answer_1} and {provided_answer_2}?",
+                "when_1": "When does this sentence take place?",
+                "who_1": "Who is the main subject of this article?",
+                "who_2": "Besides '{provided_answer_1}', who is the main character of this article?",
+                "where_1": "When does this sentence take place?"
+            }
+
+            results_list = []
+
+            searches = Search.query.all()
+            results_list = searches
+
+            def search_match(url, results):
+                for result in results:
+                    if result.url == url:
+                        return result
+
+            result_match = search_match(source_url, results_list)
+            art_headline = article_dict["headline"]
+            source_url = article_dict["self_URL"]
+
+            def first_sentences(url, low_range, upp_range):
+                sentence_list = []
+                
+                first_sentences = Article.query.filter_by(source_url=url).order_by(Article.sentence_id).all()
+
+                for sent in first_sentences:
+                    sentence_list.append(sent.sentence_contents)
+                return sentence_list[low_range:upp_range]
+            
+            trunc_sentence_list = first_sentences(source_url, 0, 5)
+            print(trunc_sentence_list)
+
+            for i, sent in enumerate(trunc_sentence_list):
+
+                print(i, sent)
+
+                response_dict = {
+                    "what_1": "",
+                    "what_2": "",
+                    "what_3": "",
+                    "when_1": "",
+                    "who_1": "",
+                    "who_2": "",
+                    "where_1": ""
+                }
+
+                # 'What' section
+
+                # Roberta Base Squad - For 'what', 'when', and 'who' questions
+                model_name = "deepset/roberta-base-squad2"
+                model = AutoModelForQuestionAnswering.from_pretrained(model_name)
+                tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+                nlp = pipeline('question-answering', model=model_name, tokenizer=model_name)
+
+                # What - Question 1
+                article_text = sent
+                question_text = roberta_dict["what_1"]
+                QA_input = {
+                    'question': question_text,
+                    'context': article_text
+                }
+                response = nlp(QA_input)
+                inputs = tokenizer(QA_input['question'], QA_input['context'], return_tensors="pt")
+                outputs = model(**inputs)
+
+                # Interpret the output
+                start_logits = outputs.start_logits
+                end_logits = outputs.end_logits
+                start_index = torch.argmax(start_logits)
+                end_index = torch.argmax(end_logits) + 1
+                answer = tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(inputs['input_ids'][0][start_index:end_index]))
+                provided_answer_1 = response["answer"]
+
+                # What - Question 2
+                question_text = roberta_dict["what_2"].format(provided_answer_1 = provided_answer_1)
+                QA_input = {
+                    'question': question_text,
+                    'context': article_text
+                }
+                response = nlp(QA_input)
+                inputs = tokenizer(QA_input['question'], QA_input['context'], return_tensors="pt")
+                outputs = model(**inputs)
+
+                # Interpret the output
+                start_logits = outputs.start_logits
+                end_logits = outputs.end_logits
+                start_index = torch.argmax(start_logits)
+                end_index = torch.argmax(end_logits) + 1
+                answer = tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(inputs['input_ids'][0][start_index:end_index]))
+                provided_answer_2 = response["answer"]
+
+                # 'Who'- Question 3
+                question_text = roberta_dict["what_3"].format(provided_answer_1 = provided_answer_1, provided_answer_2 = provided_answer_2)
+                QA_input = {
+                    'question': question_text,
+                    'context': article_text
+                }
+                response = nlp(QA_input)
+                inputs = tokenizer(QA_input['question'], QA_input['context'], return_tensors="pt")
+                outputs = model(**inputs)
+
+                # Interpret the output
+                start_logits = outputs.start_logits
+                end_logits = outputs.end_logits
+                start_index = torch.argmax(start_logits)
+                end_index = torch.argmax(end_logits) + 1
+                answer = tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(inputs['input_ids'][0][start_index:end_index]))
+                provided_answer_3 = response["answer"]
+
+                # Update response_dict values
+                response_dict["what_1"] = provided_answer_1
+                if len(provided_answer_2) > 0 and provided_answer_2 != provided_answer_1:
+                    response_dict["what_2"] = provided_answer_2
+
+                if len(provided_answer_3) > 0 and provided_answer_3 != provided_answer_1 and provided_answer_3 != provided_answer_2:
+                    response_dict["what_3"] = provided_answer_3
+
+                # 'When' section
+
+                question_text = roberta_dict["when_1"]
+                when_input_1 = {
+                    'question': question_text,
+                    'context': sent
+                }
+                response = nlp(when_input_1)
+                # Process the input
+                inputs_1 = tokenizer(when_input_1['question'], when_input_1['context'], return_tensors="pt")
+                # Feed the input to the model
+                outputs = model(**inputs_1)
+
+                # Interpret the output
+                start_logits = outputs.start_logits
+                end_logits = outputs.end_logits
+                start_index = torch.argmax(start_logits)
+                end_index = torch.argmax(end_logits) + 1
+                answer = tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(inputs_1['input_ids'][0][start_index:end_index]))
+                provided_answer = response["answer"]
+                response_dict["when_1"] = provided_answer
+                
+                # 'Who' - Question 1
+                question_text = sent
+                roberta_dict["who_1"]
+
+                who_input_1 = {
+                    'question': question_text,
+                    'context': sent
+                }
+
+                response = nlp(who_input_1)
+                inputs = tokenizer(who_input_1['question'], who_input_1['context'], return_tensors="pt")
+                outputs = model(**inputs)
+
+                # Interpret the output
+                start_logits = outputs.start_logits
+                end_logits = outputs.end_logits
+                start_index = torch.argmax(start_logits)
+                end_index = torch.argmax(end_logits) + 1
+                answer = tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(inputs_1['input_ids'][0][start_index:end_index]))
+                provided_answer_1 = response["answer"]
+                response_dict["who_1"] = provided_answer_1
+
+                # Who - Question 2
+                question_text = roberta_dict["who_2"].format(provided_answer_1 = provided_answer_1)
+                who_input_2 = {
+                    'question': question_text,
+                    'context': sent
+                }
+                response = nlp(QA_input)
+                inputs = tokenizer(who_input_2['question'], who_input_2['context'], return_tensors="pt")
+                outputs = model(**inputs)
+                
+                start_logits = outputs.start_logits
+                end_logits = outputs.end_logits
+                start_index = torch.argmax(start_logits)
+                end_index = torch.argmax(end_logits) + 1
+                answer = tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(inputs_1['input_ids'][0][start_index:end_index]))
+                provided_answer_1 = response["answer"]
+                response_dict["who_2"] = provided_answer_1
+
+                # 'Where' section - MINILM
+                # Load the model and tokenizer
+                where_model_name = "deepset/minilm-uncased-squad2"
+                model = AutoModelForQuestionAnswering.from_pretrained(where_model_name)
+                tokenizer = AutoTokenizer.from_pretrained(where_model_name)
+
+                where_nlp = pipeline('question-answering', model=where_model_name, tokenizer=where_model_name)
+
+                # Where - Question 1
+                article_text = sent
+                question_text = roberta_dict["where_1"]
+                QA_input = {
+                    'question': question_text,
+                    'context': sent
+                }
+                response = nlp(QA_input)
+                inputs = tokenizer(QA_input['question'], QA_input['context'], return_tensors="pt")
+                outputs = model(**inputs)
+
+                # Interpret the output
+                start_logits = outputs.start_logits
+                end_logits = outputs.end_logits
+                start_index = torch.argmax(start_logits)
+                end_index = torch.argmax(end_logits) + 1
+                answer = tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(inputs['input_ids'][0][start_index:end_index]))
+                provided_answer_1 = response["answer"]
+
+                response_dict["where_1"] = provided_answer_1
+
+                print(response_dict)
+
+                if analyzed == False:
+                    summaryClass = Summary(art_id_hash=art_id_hash,
+                                    art_headline = art_headline,
+                                    sentence_id = i,
+                                    source_url = source_url,
+                                    main_summary = sent,
+                                    sent_what_1 = response_dict["what_1"],
+                                    sent_what_2 = response_dict["what_2"],
+                                    sent_what_3 = response_dict["what_3"],
+                                    sent_who_1 = response_dict["who_1"],
+                                    sent_who_2 = response_dict["who_2"],
+                                    sent_when = response_dict["when_1"],
+                                    sent_where = response_dict["where_1"],
+                                    summary_datetime = datetime.now(),
+                                    search_id = id
+                                    )
+                    db.session.add(summaryClass)
+
+            db.session.commit()
+ 
 
         elif analyzed == True:
             print("already analyzed")
